@@ -15,7 +15,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-## Importar desde Excel
+## Importar desde Excel (opcional)
 
 Asegúrate de que el archivo tenga las columnas: `Assigned Bench`, `Type`, `Supplier`, `QTY`, `Description`, `Status`, `Comments`, `Storage Location` en el sheet `Inventory`.
 
