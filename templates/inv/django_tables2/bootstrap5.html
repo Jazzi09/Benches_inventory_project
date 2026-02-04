@@ -1,0 +1,50 @@
+{% load django_tables2 %}
+{% load i18n l10n %}
+
+{% block table-wrapper %}
+<div class="table-container">
+  {% block table %}
+  <table {% render_attrs table.attrs class="table" %}>
+
+    {% if table.show_header %}
+    <thead {{ table.attrs.thead.as_html }}>
+      <tr>
+        {% for column in table.columns %}
+        <th {{ column.attrs.th.as_html }} scope="col">
+          {% if column.orderable %}
+            {% querystring table.prefixed_order_by_field=column.order_by_alias.next %}
+              {{ column.header }}
+            </a>
+          {% else %}
+            {{ column.header }}
+          {% endif %}
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
+    {% endif %}
+
+    <tbody {{ table.attrs.tbody.as_html }}>
+      {% for row in table.paginated_rows %}
+      <tr {{ row.attrs.as_html }}>
+        {% for column, cell in row.items %}
+        <td {{ column.attrs.td.as_html }}>
+          {% if column.localize == None %}
+            {{ cell }}
+          {% else %}
+            {% if column.localize %}{{ cell|localize }}{% else %}{{ cell|unlocalize }}{% endif %}
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% empty %}
+        {% if table.empty_text %}
+          <tr><td colspan="{{ table.columns|length }}">{{ table.empty_text }}</td></tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+
+  </table>
+  {% endblock table %}
+</div>
+{% endblock table-wrapper %}

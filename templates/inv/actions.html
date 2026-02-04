@@ -1,0 +1,19 @@
+<div class="btn-group btn-group-sm" role="group" aria-label="Actions">
+    <a class="btn btn-outline-secondary"
+        href="{% url 'inv:edit' record.pk %}"
+        title="Edit">
+    <i class="bi bi-pencil"></i>
+    </a>
+    <span class="btn-sep"></span>
+    <form method="post"
+            action="{% url 'inv:delete' record.pk %}"
+            class="m-0 p-0 d-inline-flex">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-outline-danger"
+                title="Delete"
+                onclick="return confirm('Delete this item? This cannot be undone.');">
+        <i class="bi bi-trash"></i>
+        </button>
+    </form>
+</div>
