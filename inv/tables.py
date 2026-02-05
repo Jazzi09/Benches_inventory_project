@@ -26,6 +26,8 @@ class InventoryItemTable(tables.Table):
             "status",
             "comments",
             "storage_location",
+            "certification_date",
+            "calibration_date",
             "actions",
         )
         row_attrs = {
