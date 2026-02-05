@@ -73,6 +73,8 @@ class InventoryItem(models.Model):
     status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES)
     comments = models.TextField("Comments", blank=True)
     storage_location = models.CharField("Storage Location", max_length=20, choices=STORAGE_CHOICES)
+    certification_date = models.DateField("Certification Date", default= date.today)
+    calibration_date = models.DateField("Calibration Date", default=date.today)
 
     class Meta:
         verbose_name = "Inventory item"
