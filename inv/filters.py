@@ -1,28 +1,28 @@
 import django_filters
-from .models import InventoryItem
+from .models import InventoryItem, AssignedBench, ItemType, Supplier, Status
 
 class InventoryItemFilter(django_filters.FilterSet):
-    assigned_bench = django_filters.ChoiceFilter(
+    assigned_bench = django_filters.ModelChoiceFilter(
         field_name="assigned_bench",
-        choices=InventoryItem.ASSIGNED_CHOICES,
+        queryset=AssignedBench.objects.all(),
         empty_label="All",
         label="Assigned bench"
     )
-    type = django_filters.ChoiceFilter(
+    type = django_filters.ModelChoiceFilter(
         field_name="type",
-        choices=InventoryItem.TYPE_CHOICES,
+        queryset=ItemType.objects.all(),
         empty_label="All",
         label="Type"
     )
-    supplier = django_filters.ChoiceFilter(
+    supplier = django_filters.ModelChoiceFilter(
         field_name="supplier",
-        choices=InventoryItem.SUPPLIER_CHOICES,
+        queryset=Supplier.objects.all(),
         empty_label="All",
         label="Supplier"
     )
-    status = django_filters.ChoiceFilter(
+    status = django_filters.ModelChoiceFilter(
         field_name="status",
-        choices=InventoryItem.STATUS_CHOICES,
+        queryset=Status.objects.all(),
         empty_label="All",
         label="Status"
     )

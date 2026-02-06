@@ -1,78 +1,68 @@
 
 from django.db import models
 
+
+class CapexOpex(models.Model):
+    code = models.CharField(max_length=10, unique=True)
+    label = models.CharField(max_length=50, blank=True)
+    def __str__(self):
+        return self.label or self.code
+    
+class Project(models.Model):
+    code = models.CharField(max_length=30, unique=True)
+    label = models.CharField(max_length=100, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+class AssignedBench(models.Model):
+    code = models.CharField(max_length=30, unique=True)
+    label = models.CharField(max_length=60, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+class ItemType(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    label = models.CharField(max_length=60, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+class Supplier(models.Model):
+    code = models.CharField(max_length=30, unique=True)
+    label = models.CharField(max_length=60, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+class Status(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    label = models.CharField(max_length=60, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+class StorageLocation(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    label = models.CharField(max_length=60, blank=True)
+    def __str__(self):
+        return self.label or self.code
+
+
 class InventoryItem(models.Model):
-    
-    ASSIGNED_L21 = "L21"
-    ASSIGNED_L22 = "L22"
-    ASSIGNED_LO1 = "LO1"
-
-    ASSIGNED_CHOICES = [
-        (ASSIGNED_L21, "CADMsL2+_1"),
-        (ASSIGNED_L22, "CADMsL2+_2"),
-        (ASSIGNED_LO1, "CADMSLo_1"),
-    ]
-
-    TYPE_BENCH = "BENCH"
-    TYPE_LICENSE = "LICENSE"
-    TYPE_HARNESS = "HARNESS"
-    TYPE_RADAR = "RADAR"
-    TYPE_CAMERA = "CAMERA"
-    TYPE_ECU = "ECU"
-    TYPE_OTHER = "OTHER"
-
-    TYPE_CHOICES = [
-        (TYPE_BENCH, "Bench equipment"),
-        (TYPE_LICENSE, "License"),
-        (TYPE_HARNESS, "Harness"),
-        (TYPE_RADAR, "Radar"),
-        (TYPE_CAMERA, "Camera"),
-        (TYPE_ECU, "ECU"),
-        (TYPE_OTHER, "Other"),
-    ]
-    
-    STATUS_WORKING = "WORKING"
-    STATUS_LEND = "LEND"
-    STATUS_DAMAGED = "DAMAGE"
-
-    STATUS_CHOICES = [
-        (STATUS_WORKING, "Working"),
-        (STATUS_LEND, "Lend"),
-        (STATUS_DAMAGED, "Damaged"),
-    ]
-
-    SUPPLIER_APTIV = "APTIV"
-    SUPPLIER_VECTOR = "VECTOR"
-    SUPPLIER_LAUTERBACH = "LAUTERBACH"
-    SUPPLIER_DELL = "DELL"
-    SUPPLIER_VALLEY = "VALLEY_INT"
-
-    SUPPLIER_CHOICES = [
-        (SUPPLIER_APTIV, "Aptiv"),
-        (SUPPLIER_VECTOR, "Vector"),
-        (SUPPLIER_LAUTERBACH, "Lauterbach"),
-        (SUPPLIER_DELL, "Dell"),
-        (SUPPLIER_VALLEY, "Valley Int"),
-    ]
-    
-    STORAGE_BENCH = "BENCH"
-    STORAGE_GABINET = "GABINET"
-    STORAGE_NA = "NA"
-
-    STORAGE_CHOICES = [
-        (STORAGE_BENCH, "Bench Desk"),
-        (STORAGE_GABINET, "Gabinet 1"),
-        (STORAGE_NA, "N/A"),
-    ]
-
-    assigned_bench = models.CharField("Assigned Bench", max_length=30, choices=ASSIGNED_CHOICES)
-    type = models.CharField("Type", max_length=20, choices=TYPE_CHOICES)
-    supplier = models.CharField("Supplier", max_length=30, choices=SUPPLIER_CHOICES)
+    capex_opex = models.ForeignKey(CapexOpex, on_delete=models.PROTECT, null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.PROTECT, null=True, blank=True)
+    assigned_bench = models.ForeignKey(AssignedBench, on_delete=models.PROTECT, null=True, blank=True)
+    type = models.ForeignKey(ItemType, on_delete=models.PROTECT, null=True, blank=True)
     qty = models.PositiveIntegerField("QTY", default=0)
-    description = models.TextField("Description", blank=True)
-    status = models.CharField("Status", max_length=20, choices=STATUS_CHOICES)
+    cft_number = models.CharField("CFT #", max_length=100, blank=True, default="")
+    pr_number = models.CharField("PR #", max_length=100, blank=True, default="")
+    po_number = models.CharField("PO #", max_length=100, blank=True, default="")
+    wo_number = models.CharField("WO", max_length=100, blank=True, default="")
+    invoice_id = models.CharField("Invoice ID", max_length=100, blank=True, default="")
+    description = models.TextField("Description", blank=True) 
+    serial_number = models.CharField("Serial #", max_length=200, blank=True, default="")
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, null=True, blank=True)
+    status = models.ForeignKey(Status, on_delete=models.PROTECT, null=True, blank=True)
     comments = models.TextField("Comments", blank=True)
-    storage_location = models.CharField("Storage Location", max_length=20, choices=STORAGE_CHOICES)
+    storage_location = models.ForeignKey(StorageLocation, on_delete=models.PROTECT, null=True, blank=True)
+    asset_number = models.CharField("Asset #", max_length=200, blank=True, default="")
 
     class Meta:
         verbose_name = "Inventory item"
