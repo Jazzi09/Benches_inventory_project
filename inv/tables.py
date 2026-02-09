@@ -18,17 +18,23 @@ class InventoryItemTable(tables.Table):
         order_by = ("id",)
         sequence = (
             "id",
+            "capex_opex",
+            "project",
             "assigned_bench",
-            "type",
-            "supplier",
+            "type", 
             "qty",
+            "cft_number",
+            "pr_number",
+            "po_number",
+            "wo_number",
+            "invoice_id",
             "description",
+            "serial_number",
+            "supplier",
             "status",
             "comments",
             "storage_location",
-            "certification_date",
-            "calibration_date",
-            "actions",
+            "asset_number",
         )
         row_attrs = {
                     "id": lambda record: f"row-{record.pk}",
