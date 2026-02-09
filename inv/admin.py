@@ -2,7 +2,6 @@
 from django.contrib import admin
 from .models import InventoryItem, AssignedBench, ItemType, Supplier, Status, StorageLocation, CapexOpex, Project
 
-print(">>> inv.admin.py LOADED <<<")
 @admin.register(InventoryItem)
 class InventoryItemAdmin(admin.ModelAdmin):
     list_display = (

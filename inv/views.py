@@ -27,16 +27,16 @@ class InventoryListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMi
     template_name = "inv/list_tables2.html"
     filterset_class = InventoryItemFilter
     table_pagination = {
-        "per_page": 10         
+        "per_page": 6         
     }
 
     def get_table_pagination(self, table):
         try:
-            per_page = int(self.request.GET.get("per_page", 10))
+            per_page = int(self.request.GET.get("per_page", 6))
         except ValueError:
-            per_page = 10
-        if per_page not in (10, 25, 50, 75, 100):
-            per_page = 10
+            per_page = 6
+        if per_page not in (6, 10, 25, 50, 100):
+            per_page = 6
         return {"per_page": per_page}
 
     def get_queryset(self):
@@ -54,7 +54,7 @@ def inventory_create(request):
         form = InventoryItemForm(request.POST)
         if form.is_valid():
             obj = form.save()
-            per_page = 10
+            per_page = 6
             total = InventoryItem.objects.count()
             last_page = math.ceil(total / per_page)
             return redirect(reverse("inv:list") + f"?page={last_page}#row-{obj.pk}")
