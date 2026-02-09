@@ -192,12 +192,19 @@
   </style>
 </head>
 
+
 <body class="p-4">
   <div class="container-fluid">
 
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="m-2">Laboratory inventory</h2>
     </div>
+
+    <form method="post" action="{% url 'inv:logout' %}" 
+        class="position-absolute top-0 end-0 m-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link p-0 fw-semibold">Logout</button>
+    </form>
 
     <!-- Toolbar -->
     <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
@@ -211,7 +218,11 @@
         <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
           <i class="bi bi-bookmark me-1"></i> Save filters
         </button>
-      </div>
+    </div>
+
+    
+
+
 
       <!-- Search + Filter icon -->
       <div class="d-flex align-items-center gap-2">
@@ -383,6 +394,12 @@
       </div>
     </div>
   </div>
+
+  
+    <div class="text-end mt-5">
+        <a class="btn btn-success" href="{% url 'inv:home_view' %}">Volver</a>
+    </div>
+
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
