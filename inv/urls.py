@@ -10,7 +10,7 @@ urlpatterns = [
     path("<int:pk>/edit/", inventory_edit, name="edit"),
     path("usr_create/", user_create, name='usr_create'),
     path("<int:pk>/delete/", inventory_delete, name="delete"),
-    path('register/', register, name= "register"),
+    #path('register/', register, name= "register"),
     path('login/', auth_views.LoginView.as_view(template_name="inv/login.html"), name='login'),
     path('logout/', log_out, name='logout'),
 ]
