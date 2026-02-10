@@ -28,15 +28,18 @@ def inventory_by_project(request, project_code):
           .filter(project=current_project)
           .select_related('type', 'supplier', 'status', 'assigned_bench')
           .order_by('id'))
+    q = (request.GET.get("q") or "").strip()
+    if q:
+        qs = qs.filter(description__icontains=q)
     f = InventoryItemFilter(request.GET, queryset=qs)
-    qs_filtered = f.qs
-    table = InventoryItemTable(qs_filtered)
+    qs = f.qs
     try:
         per_page = int(request.GET.get("per_page", 6))
     except ValueError:
         per_page = 6
     if per_page not in (6, 10, 25, 50, 100):
         per_page = 6
+    table = InventoryItemTable(qs)
     RequestConfig(request, paginate={"per_page": per_page}).configure(table)
     return render(request, "inv/list_tables2.html", {
         "table": table,                    

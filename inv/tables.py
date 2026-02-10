@@ -20,9 +20,9 @@ class InventoryItemTable(tables.Table):
             "id",
             "capex_opex",
             "type",
-            "assigned_bench",
             "qty",
-            "supplier",
+            "project",
+            "assigned_bench",
             "cft_number",
             "pr_number",
             "po_number",
@@ -30,9 +30,10 @@ class InventoryItemTable(tables.Table):
             "invoice_id",
             "description",
             "serial_number",
+            "supplier",
             "status",
-            "comments",
             "storage_location",
+            "comments",
             "asset_number",
         )
         row_attrs = {
