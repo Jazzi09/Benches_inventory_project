@@ -1,40 +1,104 @@
+ {% load static %}
 <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Inventario</title>
+  <title>Inventorys</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <style>
+    .tile-grid {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .tile {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: .5rem;
+      height: 140px;
+      border: 1px solid #e6e9ef;
+      border-radius: .75rem;
+      background: #f8f9fb;
+      color: #212529;
+      text-decoration: none;
+      transition: all .15s ease-in-out;
+      box-shadow: 0 1px 2px rgba(16,24,40,.04);
+    }
+    .tile:hover {
+      background: #ffffff;
+      border-color: #cfd4da;
+      box-shadow: 0 6px 16px rgba(16,24,40,.08);
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+    .tile .icon {
+      font-size: 2rem;
+      color: #495057;
+    }
+    .tile .label {
+      font-weight: 600;
+      font-size: 1rem;
+      color: #2b2f36;
+    }
+  </style>
 </head>
 
 <body class="p-4">
   <div class="container">
-    
-      {% for p in projects %}
-          <i class="bi bi-kanban me-1"></i>{{ p.label|default:p.code }}
-        </a>
-      {% empty %}
-        <p>No hay proyectos.</p>
-      {% endfor %}
 
-    <h1 class="mb-4">Inventario</h1>
-    <form class="row g-2 mb-3" method="get">
-      <div class="col-auto">
-        <a class="btn btn-success" href="{% url 'inv:list' %}">Editar Inventario</a>
+    <!-- header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="m-0">Inventorys</h2>
+      <div class="d-flex gap-2">
+        <a href="{% url 'inv:list' %}" class="btn btn-outline-secondary btn-sm">General inventory</a>
+        <form method="post" action="{% url 'inv:logout' %}" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
+        </form>
       </div>
-      <div class="col-auto">
-        <a class="btn btn-success" href="{% url 'inv:usr_create' %}">Crear usuario</a>
-      </div>
-    <!-- <div class="text-end mt-5">s
-        <a class="btn btn-success" href="{% url 'inv:logout' %}">Cerrar sesión</a>
-    </div> -->
-    </form>
-    <form method="post" action="{% url 'inv:logout' %}" 
-        class="position-absolute top-0 end-0 m-3">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-link p-0 fw-semibold">Logout</button>
-    </form>
-
-
     </div>
+
+    <!-- tiles -->
+    <div class="tile-grid">
+      <div class="row g-3 justify-content-center">
+
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+          <a class="tile" href="{% url 'inv:list' %}" title="Shared">
+            <i class="bi bi-grid icon"></i>
+            <div class="label">Shared</div>
+          </a>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+          <a class="tile" href="{% url 'inv:inventory_by_project' 'CADMs' %}" title="CADMs">
+            <i class="bi bi-kanban icon"></i>
+            <div class="label">CADMs</div>
+          </a>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+          <a class="tile" href="{% url 'inv:inventory_by_project' 'BCM' %}" title="BCM">
+            <i class="bi bi-cpu icon"></i>
+            <div class="label">MegaBCM</div>
+          </a>
+        </div>
+
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+          <a class="tile" href="{% url 'inv:inventory_by_project' 'RFHM' %}" title="RFHM">
+            <i class="bi bi-shield-check icon"></i>
+            <div class="label">RFHM</div>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+</html>

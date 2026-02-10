@@ -41,16 +41,12 @@ class InventoryItemForm(forms.ModelForm):
             w = field.widget
             if isinstance(w, (forms.RadioSelect, forms.CheckboxInput, forms.FileInput)):
                 continue
-            w.attrs['class'] = (w.attrs.get('class', '') + ' form-control').strip()
 
-        
-        self.fields.get('cft_number', {}).widget.attrs.setdefault('placeholder', 'CFT #')
-        self.fields.get('pr_number', {}).widget.attrs.setdefault('placeholder', 'PR #')
-        self.fields.get('po_number', {}).widget.attrs.setdefault('placeholder', 'PO #')
-        self.fields.get('wo_number', {}).widget.attrs.setdefault('placeholder', 'WO')
-        self.fields.get('invoice_id', {}).widget.attrs.setdefault('placeholder', 'Invoice ID')
-
-
+            if isinstance(w, forms.Select):
+                w.attrs['class'] = (w.attrs.get('class', '') + ' form-select').strip()
+            else:
+                # Inputs normales → form-control
+                w.attrs['class'] = (w.attrs.get('class', '') + ' form-control').strip()
 
 user = get_user_model()
 
