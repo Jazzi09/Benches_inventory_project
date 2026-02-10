@@ -1,16 +1,22 @@
 
 from django.db import models
+from django.utils.text import slugify
 
 
 class CapexOpex(models.Model):
-    code = models.CharField(max_length=10, unique=True)
-    label = models.CharField(max_length=50, blank=True)
+    code = models.CharField(max_length=20, unique=True)
+    label = models.CharField(max_length=60, blank=True)
     def __str__(self):
         return self.label or self.code
     
 class Project(models.Model):
     code = models.CharField(max_length=30, unique=True)
     label = models.CharField(max_length=100, blank=True)
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base = self.label or self.code
+            self.slug = slugify(base)
+        super().save(*args, **kwargs)
     def __str__(self):
         return self.label or self.code
 

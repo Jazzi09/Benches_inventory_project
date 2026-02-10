@@ -1,9 +1,10 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from .views import InventoryListView, inventory_create, inventory_edit, inventory_delete, user_create, HomeView, log_out
+from .views import InventoryListView, inventory_create, inventory_edit, inventory_delete, user_create, HomeView, log_out, inventory_by_project
 
 app_name = "inv"
 urlpatterns = [
+    path('inventory/<str:project_code>/', inventory_by_project, name='inventory_by_project'),
     path('inventory/', InventoryListView.as_view(), name='list'),
     path('home', HomeView, name='home_view'),
     path('new/', inventory_create, name='create'),
