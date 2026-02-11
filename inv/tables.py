@@ -1,5 +1,7 @@
 import django_tables2 as tables
 from .models import InventoryItem
+from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 class InventoryItemTable(tables.Table):
     id = tables.Column(verbose_name="ID")
@@ -40,3 +42,25 @@ class InventoryItemTable(tables.Table):
                     "id": lambda record: f"row-{record.pk}",
                 }
 
+
+
+class UsersTable(tables.Table):
+    id = tables.Column(verbose_name="ID")
+
+    actions = tables.TemplateColumn(
+        template_name="inv/user_actions.html",
+        extra_context={"group_name": "Admin"},
+        verbose_name="",
+        orderable=False,
+        attrs= {
+        "th": {"class": "text-center"},  # center header
+        "td": {"class": "text-center"},  # center cell contents
+        },
+    )
+
+    class Meta:
+        model = User
+        template_name = "django_tables2/bootstrap5.html"
+        fields = ('id', "username", "email", "date_joined")
+        attrs = {"class": "table table-striped table-hover table-sm align-middle"}
+        order_by = ("id",)
