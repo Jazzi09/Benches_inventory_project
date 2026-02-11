@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.views.decorators.http import require_POST
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotAllowed
+from django.contrib.auth.models import User, Group
 import math
 
 from django_tables2 import SingleTableView
@@ -16,7 +17,7 @@ from django_tables2 import RequestConfig
 
 from .models import InventoryItem, Project
 from .forms import InventoryItemForm, UsrCreation
-from .tables import InventoryItemTable
+from .tables import InventoryItemTable, UsersTable
 from .filters import InventoryItemFilter
 
 
@@ -47,6 +48,32 @@ def inventory_by_project(request, project_code):
         "current_project": current_project
     })
 
+class UserListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMixin, FilterView):
+    permission_required = ["inv.view_inv", "inv.change_inv"]
+    login_url = 'login/'
+    model = User
+    table_class = UsersTable
+    template_name = "inv/user_list.html"
+    table_pagination = {
+        "per_page": 6         
+    }
+
+    def get_table_pagination(self, table):
+        try:
+            per_page = int(self.request.GET.get("per_page", 6))
+        except ValueError:
+            per_page = 6
+        if per_page not in (6, 10, 25, 50, 100):
+            per_page = 6
+        return {"per_page": per_page}
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(description__icontains=q)
+        return qs
+
 class InventoryListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMixin, FilterView):
     permission_required = ["inv.view_inv", "inv.change_inv"]
     login_url = 'login/'
@@ -73,6 +100,7 @@ class InventoryListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMi
         if q:
             qs = qs.filter(description__icontains=q)
         return qs
+
 
 
 @login_required
@@ -150,36 +178,38 @@ def HomeView(request):
     from .models import Project
     projects = Project.objects.order_by('label', 'code')
     return render(request, "inv/home.html",  {"projects": projects})
-    # user = None
-    # logout(request)
-    # user = request.POST.get("username")
-    # passw = request.POST.get("password")
-    
 
-    # #while not request.user.is_authenticated:
-    # user = authenticate(request, username=user, password=passw)
-    # if request.user.is_authenticated:
-    #     login(request, user)
-    #     return redirect("inv:list")
-    # else:
-    #     return HttpResponse("Invalid User")
-
-# def register(request):
-#     if request.method == 'POST':
-#         form = UsrCreation(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             username = form.cleaned_data.get('username')
-#             messages.success(request, 'Account created')
-#             return redirect('inv:login')
-#     else:
-#         form = UsrCreation()
-#     return render(request, 'inv/register.html', {'form': form})
 
 def log_out(request):
     logout(request)
     return redirect('inv:login')
 
-def assign_permissions(request):
-    User = get_user_model()
-    users = User.objects.all()
+def toggle_user_group(request, user_id):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+        #return redirect("inv:user_manage")
+    print("POST Payload:", request.POST.dict())
+    
+    group_name = request.POST.get("group")
+    if not group_name:
+        return HttpResponseBadRequest("Missing group")
+    
+    user = get_object_or_404(User, pk = user_id)
+    group = get_object_or_404(Group, name=group_name)
+
+    if request.user == user and not request.user.is_staff:
+        return HttpResponseForbidden("You cannoy modify your own groups.")
+        #return redirect("inv:user_manage")
+    
+    if group in user.groups.all():
+        user.groups.remove(group)
+        messages.info(request, f"Removed {user.username} from {group.name} ")
+    else:
+        user.groups.add(group)
+        messages.info(request, f"Added {user.username} to {group.name} ")
+
+    return redirect(request.POST.get("next")) or reverse ("inv:user_manage")
+
+def empty_path(request):
+    return redirect("inv:home_view")
