@@ -22,7 +22,6 @@ from .filters import InventoryItemFilter
 
 
 @login_required
-@permission_required("inv.view_inv")
 def inventory_by_project(request, project_code):
     current_project = get_object_or_404(Project, code=project_code)
     qs = (InventoryItem.objects
@@ -48,8 +47,8 @@ def inventory_by_project(request, project_code):
         "current_project": current_project
     })
 
-class UserListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMixin, FilterView):
-    permission_required = ["inv.view_inv", "inv.change_inv"]
+class UserListView(LoginRequiredMixin,SingleTableMixin, FilterView):
+    #permission_required = ["inv.view_inv", "inv.change_inv"],,, PermissionRequiredMixin
     login_url = 'login/'
     model = User
     table_class = UsersTable
@@ -74,8 +73,8 @@ class UserListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMixin, 
             qs = qs.filter(description__icontains=q)
         return qs
 
-class InventoryListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMixin, FilterView):
-    permission_required = ["inv.view_inv", "inv.change_inv"]
+class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
+    #permission_required = ["inv.view_inv", "inv.change_inv"],,,PermissionRequiredMixin
     login_url = 'login/'
     model = InventoryItem
     table_class = InventoryItemTable
@@ -167,7 +166,7 @@ def user_create(request):
         if usr.is_valid():
             usr.save()
             #messages.sucess(request, "User crated successfully")
-            return redirect("inv:list")
+            return redirect("inv:login")
     else:
         usr = UsrCreation()
     return render(request, "inv/usr_create.html", {"usr": usr})
@@ -212,4 +211,7 @@ def toggle_user_group(request, user_id):
     return redirect(request.POST.get("next")) or reverse ("inv:user_manage")
 
 def empty_path(request):
+    return redirect("inv:home_view")
+
+def logged_in(request):
     return redirect("inv:home_view")

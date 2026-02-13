@@ -8,7 +8,7 @@
   <form method="post" action="{{ toggle_url }}" class="m-0 p-0 d-inline">
     {% csrf_token %}
     <input type="hidden" name="group" value="{{ group_name }}">
-    <input
+    <input {% if not request.user|in_group:"Admin" and not request.user.is_staff %}disabled aria-disabled="true" {% endif %}
       class="form-check-input"
       type="checkbox"
       role="switch"
