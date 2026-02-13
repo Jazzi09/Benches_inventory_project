@@ -4,16 +4,59 @@
 
 
 <div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="card p-4 shadow" style="min-width: 350px;">
+  <div class="card p-4 shadow" style="min-width: 600px;">
     <h3 class="text-center mb-4">Log In</h3>
 
-    <form method="post">
+    <form method="post" novalidate>
       {% csrf_token %}
-      {{ form.as_p }}
+
+      
+      <!-- Non-field errors (e.g., password mismatch) -->
+      {% if usr.non_field_errors %}
+        <div class="alert alert-danger py-2">
+          {{ usr.non_field_errors }}
+        </div>
+      {% endif %}
+
+
+      <!-- Username -->
+      <div class="row mb-3">
+        <label for="{{ form.username.id_for_label }}" class="col-sm-4 col-form-label text-sm-end">Username</label>
+        <div class="mt-1 col-sm-8">
+          {# Render the input with Bootstrap class #}
+          {{ form.username }}
+          {% if form.username.errors %}
+            <div class="invalid-feedback d-block " >
+              {{ form.username.errors|striptags }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+
+      <!-- Password -->
+      <div class="row mb-4">
+        <label for="{{ form.password.id_for_label }}" class="col-sm-4 col-form-label text-sm-end">Password</label>
+        <div class="mt-1 col-sm-8">
+          {{ form.password }}
+          {% if form.password.errors %}
+            <div class="invalid-feedback d-block">
+              {{ form.password.errors|striptags }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+
+      <!-- {{ form.as_p }} -->
 
       <button type="submit" class="btn btn-primary w-100">
         Log In
       </button>
+      <div class="text-end mt-2">
+        <a class="btn btn-outline-secondary btn-sm w-100" href="{% url 'inv:usr_create' %}">Create User</a>
+      </div>
     </form>
   </div>
 </div>
+
