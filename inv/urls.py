@@ -1,13 +1,11 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
-
 from django.conf import settings
 from django.conf.urls.static import static
-
 from .views import (
     InventoryListView, UserListView, inventory_create, inventory_edit, inventory_delete,
     user_create, HomeView, log_out, inventory_by_project, toggle_user_group, empty_path, 
-    certification_history, certification_create
+    logged_in, certification_history, certification_create
 ) 
 
 app_name = "inv"
@@ -26,6 +24,7 @@ urlpatterns = [
     path('', empty_path, name="empty_path"),
     path("items/<int:pk>/certifications", certification_history, name="certification_history"),
     path("items/<int:pk>/certification/new/", certification_create, name="certification_create"),
+    path("accounts/profile/", logged_in, name="logged_in")
 ]
 
 if settings.DEBUG:
