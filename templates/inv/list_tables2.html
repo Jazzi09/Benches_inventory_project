@@ -18,13 +18,11 @@
       max-height: 70vh;
       border-radius: 0.5rem;
     }
-    
     table.table {
         margin-bottom: 0;
         border-collapse: separate;
         border-spacing: 0;
-        }
-
+    }
     table.table thead th {
         position: sticky;
         top: 0;
@@ -35,31 +33,27 @@
         font-size: 0.82rem;
         padding: .45rem .6rem;
         white-space: nowrap;
-        }
-    
+    }
     table.table tbody td {
         font-size: 0.82rem;
         padding: .40rem .6rem;
         border-bottom: 1px solid #eef1f5;
         vertical-align: middle;
-        }
-        
+    }
     table.table tbody tr:hover {
         background: #f6f9ff;
-        }
-
+    }
     table.table td, table.table th {
       border-right: 1px solid #f0f2f6;
-        }
+    }
     table.table td:last-child, table.table th:last-child {
-      border-right: none;
-        }
-
+        border-right: none;
+    }
     table.table thead th.orderable {
         position: sticky;
         top: 0;
         padding-right: 1.5rem;
-        }
+    }
     table.table thead th.orderable::after {
         content: "⇅";
         position: absolute;
@@ -68,41 +62,32 @@
         transform: translateY(-50%);
         font-size: .75rem;
         opacity: .35;
-        }
+    }
     table.table thead th.orderable.asc::after {
         content: "▲";
         opacity: .85;
-        }
+    }
     table.table thead th.orderable.desc::after {
         content: "▼";
         opacity: .85;
-        }
-        
+    }
     table.table thead th a {
         color: #212529;
         text-decoration: none;
-        }
+    }
     table.table thead th a:hover {
         text-decoration: underline;
-        }
+    }
    
     .tight-col {
       width: 1%;
       white-space: nowrap;
     }
- 
-    table.table tbody td:nth-child(5) {
-        max-width: 360px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        }
-    
+
     .btn-group > form:last-child .btn {
         border-top-left-radius: 0 !important;
         border-bottom-left-radius: 0 !important;
     }
-    
     .btn-sep{
         width: 0.4px;
         background: transparent;
@@ -114,7 +99,6 @@
         border-top: 2px solid #ffd966 !important;
         border-bottom: 2px solid #ffd966 !important;
     }
-
     tr:target td {
         box-shadow: inset 0 -1px 0 #ffd966, inset 0 1px 0 #ffd966;
     }
@@ -122,13 +106,11 @@
     .table-wrap {
         padding-bottom: 0;
     }
-
     .table-footer{
         border-top: 1px solid #eef1f5;
         background: #fff;
         margin-top: 8px;
     }
-
     .table-container .pagination{
         margin: 0.08rem;                
     }
@@ -137,19 +119,16 @@
         border-top: none !important;
         background: #fff;
     }
-
     .pager-label {
         font-size: .85rem;
         color: #6c757d;
         white-space: nowrap;
     }
-
     .pager-range {
         font-size: .85rem;
         color: #212529;
         white-space: nowrap;
     }
-
     .pager-select {
         border: 1px solid #cfd4da;
         border-radius: .35rem;
@@ -157,29 +136,24 @@
         font-size: .85rem;
         background: #fff;
     }
-
     .pager-icons {
         display: inline-flex;
         align-items: center;
         gap: .65rem;
     }
-
     .pager-icon {
         font-size: 1.2rem;
         color: #6c757d;
         cursor: pointer;
         user-select: none;
     }
-
     .pager-icon:hover {
         color: #212529;
     }
-
     .pager-icon.disabled {
         opacity: .35;
         cursor: default;
     }
-
     .pager-nav a {
         text-decoration: none;
         color: inherit;
@@ -188,8 +162,35 @@
     .table-container nav[aria-label="Table navigation"] {
         display: none !important;
     }
-
-
+    table.table th.col-required-cert,
+    table.table td.col-required-cert {
+        min-width: 200px;
+        width: 200px;
+        white-space: nowrap;
+    }
+    table.table td.col-desc .desc-cell,
+    table.table th.col-desc .desc-cell {   
+        max-width: 350px;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    @media (max-width: 768px) {
+        table.table td.col-desc .desc-cell,
+        table.table th.col-desc .desc-cell {
+            max-width: 70vw;
+            width: auto;
+            overflow: visible;
+            text-overflow: clip;
+        }
+        table.table th.col-required-cert,
+        table.table td.col-required-cert {
+            min-width: 240px;
+            width: auto;
+            white-space: normal;
+        }
+    }
   </style>
 </head>
 

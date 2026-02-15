@@ -1,0 +1,57 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Certification History</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="p-3">
+<div class="container">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Certification History — {{ item.name }}</h1>
+    
+    <div class="d-flex gap-2">
+      <a class="btn btn-success btn-sm"
+         href="{% url 'inv:certification_create' item.pk %}">
+         Add certification
+      </a>
+      {% if project_code %}
+        <a class="btn btn-outline-secondary btn-sm"
+           href="{% url 'inv:inventory_by_project' project_code %}">
+           Back
+        </a>
+      {% else %}
+        <a class="btn btn-outline-secondary btn-sm"
+           href="{% url 'inv:list' %}">
+           Back
+        </a>
+      {% endif %}
+</div>
+
+  </div>
+
+  <table class="table table-sm align-middle">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>File</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for cert in certifications %}
+      <tr>
+        <td>{{ cert.certification_date|date:"Y-m-d" }}</td>
+        <td>
+          <a href="{{ cert.file.url }}" class="btn btn-link btn-sm" target="_blank" rel="noopener">Download</a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="2"><em>No certifications yet</em></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
