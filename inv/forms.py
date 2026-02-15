@@ -1,6 +1,6 @@
 
 from django import forms
-from .models import InventoryItem, CapexOpex, ItemType
+from .models import InventoryItem, CapexOpex, ItemType, Certification
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 
@@ -54,3 +54,23 @@ class UsrCreation(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = user
         fields = ("username", "email", )
+
+class CertificationForm(forms.ModelForm):
+    class Meta:
+        model = Certification
+        fields = ["certification_date", "file"]
+        widgets = {
+            "certification_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def clean_file(self):
+        f = self.cleaned_data["file"]
+        max_mb = 10
+        if f.size > max_mb * 1024 * 1024:
+            raise forms.ValidationError(f"The file must not exceed {max_mb} MB.")
+        import os
+        allowed = {".pdf", ".png", ".jpg", ".jpeg"}
+        ext = os.path.splitext(f.name)[1].lower()
+        if ext not in allowed:
+            raise forms.ValidationError("Allowed extensions: PDF, PNG, JPG, JPEG.")
+        return f

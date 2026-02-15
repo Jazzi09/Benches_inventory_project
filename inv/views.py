@@ -16,7 +16,7 @@ from django_filters.views import FilterView
 from django_tables2 import RequestConfig
 
 from .models import InventoryItem, Project
-from .forms import InventoryItemForm, UsrCreation
+from .forms import InventoryItemForm, UsrCreation, CertificationForm
 from .tables import InventoryItemTable, UsersTable
 from .filters import InventoryItemFilter
 
@@ -101,8 +101,6 @@ class InventoryListView(PermissionRequiredMixin,LoginRequiredMixin,SingleTableMi
             qs = qs.filter(description__icontains=q)
         return qs
 
-
-
 @login_required
 @permission_required("inv.change_inv")
 def inventory_create(request):
@@ -172,13 +170,11 @@ def user_create(request):
         usr = UsrCreation()
     return render(request, "inv/usr_create.html", {"usr": usr})
 
-
 @login_required
 def HomeView(request):
     from .models import Project
     projects = Project.objects.order_by('label', 'code')
     return render(request, "inv/home.html",  {"projects": projects})
-
 
 def log_out(request):
     logout(request)
@@ -213,3 +209,40 @@ def toggle_user_group(request, user_id):
 
 def empty_path(request):
     return redirect("inv:home_view")
+
+@login_required
+@permission_required("inv.view_inv")
+def certification_history(request, pk):
+    item = get_object_or_404(InventoryItem, pk=pk)
+    certifications = item.certifications.all().order_by("-certification_date")
+    project_code = item.project.code if item.project else None
+    return render(
+        request,
+        "inv/certification_history.html",
+        {
+            "item": item,
+            "certifications": certifications,
+            "project_code": project_code,
+        },
+)
+
+@login_required
+@permission_required("inv.change_inv")
+def certification_create(request, pk):
+    item = get_object_or_404(InventoryItem, pk=pk)
+    if not item.requires_certification:
+        messages.error(request, "This item does not require certification.")
+        return redirect("inv:certification_history", pk=item.pk)
+
+    if request.method == "POST":
+        form = CertificationForm(request.POST, request.FILES)
+        if form.is_valid():
+            cert = form.save(commit=False)
+            cert.item = item
+            cert.save()
+            messages.success(request, "Certification saved successfully.")
+            return redirect("inv:certification_history", pk=item.pk)
+    else:
+        form = CertificationForm()
+
+    return render(request, "inv/certification_form.html", {"item": item, "form": form})
