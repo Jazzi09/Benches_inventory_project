@@ -1,22 +1,67 @@
-{# saved_filter_dropdown.html #}
-<div class="dropdown">
-  <ul class="dropdown-menu">
-    {% if objects %}
-      {% for sf in objects %}
-        {% with qs=sf.params|urlencode %}
-          {% if sf.project_code %}
-            <li>
-                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
-            </li>
-          {% else %}
-            <li>
-                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
-            </li>
-          {% endif %}
-        {% endwith %}
-      {% endfor %}
-    {% else %}
-      <li><span class="dropdown-item-text text-muted">No saved filters</span></li>
-    {% endif %}
-  </ul>
-</div>
+{# templates/inv/saved_filter_dropdown.html #}
+
+<select id="savedFiltersSelect" class="form-select form-select-sm">
+  <option value="" selected>Select a saved filter</option>
+  {% if items %}
+    {% for it in items %}
+      <option value="{{ it.qs }}">{{ it.name }}</option>
+    {% endfor %}
+  {% endif %}
+</select>
+
+<script>
+(function() {
+  const sel = document.getElementById('savedFiltersSelect');
+  if (!sel) return;
+
+  sel.addEventListener('change', function() {
+    const qs = sel.value;
+    if (!qs) return;
+
+    // Convierte "a=1&b=2&b=3" a URLSearchParams
+    const params = new URLSearchParams(qs.startsWith('?') ? qs.slice(1) : qs);
+    const form = document.getElementById('filterForm');
+    if (!form) return;
+
+    // 1) Limpia los valores actuales de los inputs que estén en params
+    // 2) Aplica los nuevos del saved filter (soporta múltiples valores)
+    // 3) Dispara change para widgets que dependan de él
+    // Nota: si tus filtros usan names como "type" o "type__id__exact", params debe usar ese name exacto
+    params.forEach((value, key) => {
+      const inputs = form.querySelectorAll(`[name="${key}"]`);
+      if (!inputs || inputs.length === 0) return;
+
+      // Si hay varios elementos con el mismo name (checkboxes), setea por tipo
+      if (inputs.length > 1) {
+        // Desmarca todo primero
+        inputs.forEach(el => {
+          if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+        });
+        // Marca los que coinciden
+        const values = params.getAll(key);
+        inputs.forEach(el => {
+          if (el.type === 'checkbox' || el.type === 'radio') {
+            el.checked = values.includes(el.value);
+          } else {
+            el.value = values[0] ?? '';
+          }
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+      } else {
+        // Un solo input/select con ese name
+        const el = inputs[0];
+        const values = params.getAll(key);
+        // Si el select permite múltiple, aplica la lista
+        if (el.tagName === 'SELECT' && el.multiple) {
+          [...el.options].forEach(opt => opt.selected = values.includes(opt.value));
+        } else {
+          el.value = values[0] ?? '';
+        }
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+
+    // NO hacemos submit; el usuario oprimirá "Show results"
+  });
+})();
+</script>

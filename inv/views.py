@@ -22,11 +22,12 @@ from .filters import InventoryItemFilter
 
 from urllib.parse import parse_qs, urlencode
 
+
 @login_required
 @permission_required("inv.view_inv")
 def inventory_filter_modal(request):
 
-    project_code = request.GET.get("project")  # puede venir del botón o del contexto
+    project_code = request.GET.get("project")
 
     if project_code:
         current_project = Project.objects.filter(code=project_code).first()
@@ -291,34 +292,6 @@ def certification_create(request, pk):
     return render(request, "inv/certification_form.html", {"item": item, "form": form})
 
 @login_required
-def saved_filter_modal(request):
-    project_code = request.GET.get("project")
-    if project_code:
-        current_project = Project.objects.filter(code=project_code).first()
-        base_qs = (InventoryItem.objects
-                   .filter(project=current_project)
-                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
-                   .order_by('id'))
-        action = reverse("inv:inventory_by_project", args=[project_code])
-    else:
-        base_qs = (InventoryItem.objects
-                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
-                    .order_by('id'))
-        action = reverse("inv:list")
-
-    f = InventoryItemFilter(request.GET, queryset=base_qs)
-
-    saved_filters = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
-    
-    return render(request, "inv/filter_form.html", {
-        "filter": f,
-        "action_url": action,
-        "project_code": project_code,
-        "saved_filters": saved_filters,
-    })
-
-
-@login_required
 @require_POST
 def saved_filter_create(request):
     name = (request.POST.get("name") or "").strip()
@@ -340,20 +313,30 @@ def saved_filter_create(request):
         defaults={"params": qs_dict, "project_code": project_code}
     )
 
-    return JsonResponse({}, status=204, headers={"HX-Trigger": "filtersSaved"})
-
+    return HttpResponse(status=204, headers={"HX-Trigger": "filtersSaved"})
 
 @login_required
 def saved_filter_list_modal(request):
     project_code = request.GET.get("project")
-    """objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")"""    
+    objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
+
+    items = []
+    for f in objects:
+        params = f.params or {}
+        qs = urlencode(params, doseq=True)
+        items.append({"name": f.name, "qs": qs})
+
     return render(request, "inv/saved_filter_dropdown.html", {
         "project_code": project_code,
+        "items": items,
     })
 
-
-""" @login_required
-def saved_filter_list(request):
-    objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
-    return render(request, "inv/saved_filter_list.html", {"objects": objects})
- """
+@login_required
+def saved_filter_form_modal(request):
+    project_code = request.GET.get("project")
+    current_qs = request.META.get("QUERY_STRING", "")
+    ctx = {
+        "project": project_code,
+        "current_qs": current_qs,
+    }
+    return render(request, "inv/saved_filter_form.html", ctx)
