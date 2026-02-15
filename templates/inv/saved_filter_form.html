@@ -1,0 +1,31 @@
+{# templates/inv/saved_filter_form.html #}
+{{ request.build_absolute_uri|cut:request.path }}
+  <div class="mb-3">
+    <label class="form-label fw-semibold">Name</label>
+    <input type="text"
+           name="name"
+           class="form-control form-control-sm"
+           value="{{ suggested|default:'' }}"
+           placeholder="e.g. HW – Active items">
+    {% if error %}<div class="invalid-feedback d-block">{{ error }}</div>{% endif %}
+  </div>
+
+  <input type="hidden" name="current_qs" value="">
+  {% if project_code %}
+    <input type="hidden" name="project" value="{{ project_code }}">
+  {% endif %}
+</form>
+
+<script>
+  (function() {
+    // Setea el QS actual en el hidden
+    var form = document.querySelector('#modalFormWrapper form[action$="{% url "inv:saved_filter_create" %}"]');
+    if (form) {
+      var qs = window.location.search;
+      if (qs.startsWith('?')) qs = qs.substring(1);
+      var h = form.querySelector('input[name="current_qs"]');
+      if (!h) { h = document.createElement('input'); h.type='hidden'; h.name='current_qs'; form.appendChild(h); }
+      h.value = qs;
+    }
+  })();
+</script>

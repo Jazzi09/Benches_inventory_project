@@ -1,209 +1,182 @@
 {# templates/inv/inventory_form.html #}
-<form method="post" action="" class="card card-body shadow-sm">
+
+<form id="itemForm"
+      method="post"
+      action="{{ action_url|default:'' }}"
+      class="{% if not in_modal %}card card-body shadow-sm{% else %}p-0{% endif %}">
+
     {% csrf_token %}
 
-    {# Capexopex (radios) #}
+    {# Capex/Opex (radios) #}
     {% if form.capex_opex %}
-        <div class="mb-3">
+      <div class="mb-3">
         <label class="form-label fw-semibold">Capex/Opex</label>
         <div class="d-flex flex-wrap gap-4">
-            {% for opt in form.capex_opex %}
+          {% for opt in form.capex_opex %}
             <div class="form-check">
-                {{ opt.tag }}
-                <label class="form-check-label" for="{{ opt.id_for_label }}">{{ opt.choice_label }}</label>
+              {{ opt.tag }}
+              <label class="form-check-label" for="{{ opt.id_for_label }}">{{ opt.choice_label }}</label>
             </div>
-            {% endfor %}
+          {% endfor %}
         </div>
         {% if form.capex_opex.errors %}
-            <div class="invalid-feedback d-block">{{ form.capex_opex.errors|striptags }}</div>
+          <div class="invalid-feedback d-block">{{ form.capex_opex.errors|striptags }}</div>
         {% endif %}
-        </div>
+      </div>
     {% endif %}
 
     {# Type (radios) #}
     {% if form.type %}
-        <div class="mb-3">
+      <div class="mb-3">
         <label class="form-label fw-semibold">Type</label>
         <div class="d-flex flex-wrap gap-4">
-            {% for opt in form.type %}
+          {% for opt in form.type %}
             <div class="form-check">
-                {{ opt.tag }}
-                <label class="form-check-label" for="{{ opt.id_for_label }}">{{ opt.choice_label }}</label>
+              {{ opt.tag }}
+              <label class="form-check-label" for="{{ opt.id_for_label }}">{{ opt.choice_label }}</label>
             </div>
-            {% endfor %}
+          {% endfor %}
         </div>
         {% if form.type.errors %}
-            <div class="invalid-feedback d-block">{{ form.type.errors|striptags }}</div>
+          <div class="invalid-feedback d-block">{{ form.type.errors|striptags }}</div>
         {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="row g-3 mb-3">
+      {% if form.qty %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">QTY</label>
+          {{ form.qty }}
+          {% if form.qty.errors %}<div class="invalid-feedback d-block">{{ form.qty.errors|striptags }}</div>{% endif %}
         </div>
-    {% endif %}
+      {% endif %}
 
-  <div class="row g-3 mb-3">
+      {% if form.project %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Project</label>
+          {{ form.project }}
+          {% if form.project.errors %}<div class="invalid-feedback d-block">{{ form.project.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.qty %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">QTY</label>
-        {{ form.qty }}
-        {% if form.qty.errors %}
-          <div class="invalid-feedback d-block">{{ form.qty.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.assigned_bench %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Assigned bench</label>
+          {{ form.assigned_bench }}
+          {% if form.assigned_bench.errors %}<div class="invalid-feedback d-block">{{ form.assigned_bench.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.project %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Project</label>
-        {{ form.project }}
-        {% if form.project.errors %}
-          <div class="invalid-feedback d-block">{{ form.project.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.cft_number %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">CFT #</label>
+          {{ form.cft_number }}
+          {% if form.cft_number.errors %}<div class="invalid-feedback d-block">{{ form.cft_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.assigned_bench %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Assigned bench</label>
-        {{ form.assigned_bench }}
-        {% if form.assigned_bench.errors %}
-          <div class="invalid-feedback d-block">{{ form.assigned_bench.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.pr_number %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">PR #</label>
+          {{ form.pr_number }}
+          {% if form.pr_number.errors %}<div class="invalid-feedback d-block">{{ form.pr_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.cft_number %}
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">CFT #</label>
-        {{ form.cft_number }}
-        {% if form.cft_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.cft_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.po_number %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">PO #</label>
+          {{ form.po_number }}
+          {% if form.po_number.errors %}<div class="invalid-feedback d-block">{{ form.po_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.pr_number %}
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">PR #</label>
-        {{ form.pr_number }}
-        {% if form.pr_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.pr_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.wo_number %}
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">WO</label>
+          {{ form.wo_number }}
+          {% if form.wo_number.errors %}<div class="invalid-feedback d-block">{{ form.wo_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
+    </div>
 
-    {% if form.po_number %}
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">PO #</label>
-        {{ form.po_number }}
-        {% if form.po_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.po_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+    <div class="row g-3 mb-3">
+      {% if form.invoice_id %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Invoice ID</label>
+          {{ form.invoice_id }}
+          {% if form.invoice_id.errors %}<div class="invalid-feedback d-block">{{ form.invoice_id.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.wo_number %}
-      <div class="col-md-6">
-        <label class="form-label fw-semibold">WO</label>
-        {{ form.wo_number }}
-        {% if form.wo_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.wo_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.serial_number %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Serial #</label>
+          {{ form.serial_number }}
+          {% if form.serial_number.errors %}<div class="invalid-feedback d-block">{{ form.serial_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-  </div>
+      {% if form.asset_number %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Asset #</label>
+          {{ form.asset_number }}
+          {% if form.asset_number.errors %}<div class="invalid-feedback d-block">{{ form.asset_number.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
+    </div>
 
-  <div class="row g-3 mb-3">
-    {% if form.invoice_id %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Invoice ID</label>
-        {{ form.invoice_id }}
-        {% if form.invoice_id.errors %}
-          <div class="invalid-feedback d-block">{{ form.invoice_id.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+    <div class="row g-3 mb-3">
+      {% if form.supplier %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Supplier</label>
+          {{ form.supplier }}
+          {% if form.supplier.errors %}<div class="invalid-feedback d-block">{{ form.supplier.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.serial_number %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Serial #</label>
-        {{ form.serial_number }}
-        {% if form.serial_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.serial_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+      {% if form.status %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Status</label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.asset_number %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Asset #</label>
-        {{ form.asset_number }}
-        {% if form.asset_number.errors %}
-          <div class="invalid-feedback d-block">{{ form.asset_number.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-  </div>
+      {% if form.storage_location %}
+        <div class="col-12 col-md-4">
+          <label class="form-label fw-semibold">Storage location</label>
+          {{ form.storage_location }}
+          {% if form.storage_location.errors %}<div class="invalid-feedback d-block">{{ form.storage_location.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
+    </div>
 
-  <div class="row g-3 mb-3">
-    {% if form.supplier %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Supplier</label>
-        {{ form.supplier }}
-        {% if form.supplier.errors %}
-          <div class="invalid-feedback d-block">{{ form.supplier.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
+    <div class="row g-3">
+      {% if form.description %}
+        <div class="col-12">
+          <label class="form-label fw-semibold">Description</label>
+          {{ form.description }}
+          {% if form.description.errors %}<div class="invalid-feedback d-block">{{ form.description.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
 
-    {% if form.status %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Status</label>
-        {{ form.status }}
-        {% if form.status.errors %}
-          <div class="invalid-feedback d-block">{{ form.status.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if form.storage_location %}
-      <div class="col-12 col-md-4">
-        <label class="form-label fw-semibold">Storage location</label>
-        {{ form.storage_location }}
-        {% if form.storage_location.errors %}
-          <div class="invalid-feedback d-block">{{ form.storage_location.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-  </div>
-
-  <div class="row g-3">
-    {% if form.description %}
-      <div class="col-12">
-        <label class="form-label fw-semibold">Description</label>
-        {{ form.description }}
-        {% if form.description.errors %}
-          <div class="invalid-feedback d-block">{{ form.description.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if form.comments %}
-      <div class="col-12">
-        <label class="form-label fw-semibold">Comments</label>
-        {{ form.comments }}
-        {% if form.comments.errors %}
-          <div class="invalid-feedback d-block">{{ form.comments.errors|striptags }}</div>
-        {% endif %}
-      </div>
-    {% endif %}
-  </div>
+      {% if form.comments %}
+        <div class="col-12">
+          <label class="form-label fw-semibold">Comments</label>
+          {{ form.comments }}
+          {% if form.comments.errors %}<div class="invalid-feedback d-block">{{ form.comments.errors|striptags }}</div>{% endif %}
+        </div>
+      {% endif %}
+    </div>
 </form>
 
-<div class="d-flex justify-content-end gap-2 mt-4">
-    {% if in_modal %}
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-    {% else %}
-        <a class="btn btn-outline-secondary" href="{% url 'inv:list' %}">Cancel</a>
-    {% endif %}
-    <button class="btn btn-primary" type="submit">Save</button>
-</div>
+{% if not in_modal %}
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a class="btn btn-outline-secondary" href="{% url 'inv:list' %}">Cancel</a>
+    <button class="btn btn-primary" type="submit" form="itemForm">
+      {% if submit_label %}{{ submit_label }}{% else %}Save{% endif %}
+    </button>
+  </div>
+{% endif %}

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.views.decorators.http import require_POST
 from django.urls import reverse
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotAllowed
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotAllowed, JsonResponse
 from django.contrib.auth.models import User, Group
 import math
 
@@ -15,11 +15,43 @@ from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
 from django_tables2 import RequestConfig
 
-from .models import InventoryItem, Project
+from .models import InventoryItem, Project, SavedFilter
 from .forms import InventoryItemForm, UsrCreation, CertificationForm
 from .tables import InventoryItemTable, UsersTable
 from .filters import InventoryItemFilter
 
+from urllib.parse import parse_qs, urlencode
+
+@login_required
+@permission_required("inv.view_inv")
+def inventory_filter_modal(request):
+
+    project_code = request.GET.get("project")  # puede venir del botón o del contexto
+
+    if project_code:
+        current_project = Project.objects.filter(code=project_code).first()
+        base_qs = (InventoryItem.objects
+                   .filter(project=current_project)
+                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
+                   .order_by('id'))
+        action = reverse("inv:inventory_by_project", args=[project_code])
+    else:
+        base_qs = (InventoryItem.objects
+                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
+                   .order_by('id'))
+        action = reverse("inv:list")
+
+    f = InventoryItemFilter(request.GET, queryset=base_qs)
+
+    if request.headers.get("HX-Request"):
+        return render(request, "inv/filter_form.html", {
+            "filter": f,
+            "action_url": action,
+            "project_code": project_code,
+        })
+    if project_code:
+        return redirect("inv:inventory_by_project", project_code=project_code)
+    return redirect("inv:list")
 
 @login_required
 def inventory_by_project(request, project_code):
@@ -48,7 +80,6 @@ def inventory_by_project(request, project_code):
     })
 
 class UserListView(LoginRequiredMixin,SingleTableMixin, FilterView):
-    #permission_required = ["inv.view_inv", "inv.change_inv"],,, PermissionRequiredMixin
     login_url = 'login/'
     model = User
     table_class = UsersTable
@@ -74,7 +105,6 @@ class UserListView(LoginRequiredMixin,SingleTableMixin, FilterView):
         return qs
 
 class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
-    #permission_required = ["inv.view_inv", "inv.change_inv"],,,PermissionRequiredMixin
     login_url = 'login/'
     model = InventoryItem
     table_class = InventoryItemTable
@@ -127,11 +157,15 @@ def inventory_create(request):
             initial["project"] = current_project
         form = InventoryItemForm(initial=initial)
 
-    if request.headers.get("HX-Request"):
-        return render(request, "inv/inventory_form.html", {
-            "form": form,
-            "in_modal": True,
-            "current_project": current_project
+        if request.headers.get("HX-Request"):
+            action = reverse("inv:create")
+            if current_project:
+                action += f"?project={current_project.code}"  # preserva el proyecto
+            return render(request, "inv/inventory_form.html", {
+                "form": form,
+                "in_modal": True,
+                "action_url": action,
+                "current_project": current_project,
         })
 
     return render(request, "inv/create.html", {"form": form, "mode": "create", "current_project": current_project})
@@ -140,14 +174,26 @@ def inventory_create(request):
 @permission_required("inv.change_inv")
 def inventory_edit(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
+
     if request.method == "POST":
         form = InventoryItemForm(request.POST, instance=item)
         if form.is_valid():
             form.save()
             messages.success(request, "Item actualizado")
+            if request.headers.get("HX-Request"):
+                return HttpResponse(status=204, headers={"HX-Refresh": "true"})
             return redirect("inv:list")
     else:
         form = InventoryItemForm(instance=item)
+
+    if request.headers.get("HX-Request"):
+        from django.urls import reverse
+        action = reverse("inv:edit", args=[item.pk])
+        return render(request, "inv/inventory_form.html", {
+            "form": form,
+            "in_modal": True,
+            "action_url": action,
+        })
     return render(request, "inv/edit.html", {"form": form, "item": item})
 
 @login_required
@@ -163,7 +209,6 @@ def user_create(request):
         usr = UsrCreation(request.POST)
         if usr.is_valid():
             usr.save()
-            #messages.sucess(request, "User crated successfully")
             return redirect("inv:login")
     else:
         usr = UsrCreation()
@@ -182,8 +227,6 @@ def log_out(request):
 def toggle_user_group(request, user_id):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-
-        #return redirect("inv:user_manage")
     print("POST Payload:", request.POST.dict())
     
     group_name = request.POST.get("group")
@@ -194,9 +237,7 @@ def toggle_user_group(request, user_id):
     group = get_object_or_404(Group, name=group_name)
 
     if request.user == user and not request.user.is_staff:
-        return HttpResponseForbidden("You cannoy modify your own groups.")
-        #return redirect("inv:user_manage")
-    
+        return HttpResponseForbidden("You cannoy modify your own groups.")    
     if group in user.groups.all():
         user.groups.remove(group)
         messages.info(request, f"Removed {user.username} from {group.name} ")
@@ -248,3 +289,71 @@ def certification_create(request, pk):
         form = CertificationForm()
 
     return render(request, "inv/certification_form.html", {"item": item, "form": form})
+
+@login_required
+def saved_filter_modal(request):
+    project_code = request.GET.get("project")
+    if project_code:
+        current_project = Project.objects.filter(code=project_code).first()
+        base_qs = (InventoryItem.objects
+                   .filter(project=current_project)
+                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
+                   .order_by('id'))
+        action = reverse("inv:inventory_by_project", args=[project_code])
+    else:
+        base_qs = (InventoryItem.objects
+                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
+                    .order_by('id'))
+        action = reverse("inv:list")
+
+    f = InventoryItemFilter(request.GET, queryset=base_qs)
+
+    saved_filters = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
+    
+    return render(request, "inv/filter_form.html", {
+        "filter": f,
+        "action_url": action,
+        "project_code": project_code,
+        "saved_filters": saved_filters,
+    })
+
+
+@login_required
+@require_POST
+def saved_filter_create(request):
+    name = (request.POST.get("name") or "").strip()
+    if not name:
+        return render(request, "inv/saved_filter_form.html", {
+            "error": "Name is required.",
+        }, status=400)
+    raw_qs = request.POST.get("current_qs", "")
+    qs_dict = {}
+    if raw_qs:
+        for k, v in parse_qs(raw_qs, keep_blank_values=True).items():
+            qs_dict[k] = v[0] if len(v) == 1 else v
+
+    project_code = request.POST.get("project") or qs_dict.get("project") or None
+
+    SavedFilter.objects.update_or_create(
+        user=request.user,
+        name=name,
+        defaults={"params": qs_dict, "project_code": project_code}
+    )
+
+    return JsonResponse({}, status=204, headers={"HX-Trigger": "filtersSaved"})
+
+
+@login_required
+def saved_filter_list_modal(request):
+    project_code = request.GET.get("project")
+    """objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")"""    
+    return render(request, "inv/saved_filter_dropdown.html", {
+        "project_code": project_code,
+    })
+
+
+""" @login_required
+def saved_filter_list(request):
+    objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
+    return render(request, "inv/saved_filter_list.html", {"objects": objects})
+ """

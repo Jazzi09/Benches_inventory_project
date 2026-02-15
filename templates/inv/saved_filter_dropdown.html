@@ -1,0 +1,22 @@
+{# saved_filter_dropdown.html #}
+<div class="dropdown">
+  <ul class="dropdown-menu">
+    {% if objects %}
+      {% for sf in objects %}
+        {% with qs=sf.params|urlencode %}
+          {% if sf.project_code %}
+            <li>
+                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
+            </li>
+          {% else %}
+            <li>
+                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
+            </li>
+          {% endif %}
+        {% endwith %}
+      {% endfor %}
+    {% else %}
+      <li><span class="dropdown-item-text text-muted">No saved filters</span></li>
+    {% endif %}
+  </ul>
+</div>

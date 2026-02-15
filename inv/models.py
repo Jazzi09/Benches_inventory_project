@@ -49,7 +49,6 @@ class StorageLocation(models.Model):
     def __str__(self):
         return self.label or self.code
 
-
 class InventoryItem(models.Model):
     capex_opex = models.ForeignKey(CapexOpex, on_delete=models.PROTECT, null=True, blank=True)
     project = models.ForeignKey(Project, on_delete=models.PROTECT, null=True, blank=True)
@@ -122,11 +121,9 @@ class InventoryItem(models.Model):
             "certified": "Certified",
         }[self.computed_status]
 
-
 def certification_upload_to(instance, filename):
     year = instance.certification_date.year if instance.certification_date else timezone.localdate().year
     return f"certifications/{instance.item_id}/{year}/{filename}"
-
 
 class Certification(models.Model):
     item = models.ForeignKey(InventoryItem, related_name="certifications", on_delete=models.CASCADE)
@@ -149,3 +146,17 @@ class Certification(models.Model):
 
     def __str__(self):
         return f"{self.item} — {self.certification_date:%Y-%m-%d}"
+
+class SavedFilter(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="inv_saved_filters")
+    name = models.CharField(max_length=100)
+    params = models.JSONField(default=dict)
+    project_code = models.CharField(max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ("-created_at",)
+        unique_together = ("user", "name")
+
+    def __str__(self):
+        return f"{self.name} ({self.user})"

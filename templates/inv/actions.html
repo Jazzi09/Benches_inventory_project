@@ -1,9 +1,15 @@
 <div class="btn-group btn-group-sm" role="group" aria-label="Actions">
-    <a class="btn btn-outline-secondary"
-        href="{% url 'inv:edit' record.pk %}"
-        title="Edit">
-    <i class="bi bi-pencil"></i>
-    </a>
+    <button type="button"
+            class="btn btn-outline-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#modalCreate"
+            data-title="Edit item"
+            hx-get="{% url 'inv:edit' record.pk %}"
+            hx-target="#modalFormWrapper"
+            hx-swap="innerHTML"
+            title="Edit">
+        <i class="bi bi-pencil"></i>
+    </button>
     <span class="btn-sep"></span>
     <form method="post"
             action="{% url 'inv:delete' record.pk %}"

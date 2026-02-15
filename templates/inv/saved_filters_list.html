@@ -1,0 +1,29 @@
+{# templates/inv/saved_filter_list.html #}
+<div class="dropdown">
+  <ul class="dropdown-menu dropdown-menu-end">
+    {% if objects %}
+      {% for sf in objects %}
+        {# Construye la URL según si el filtro es por proyecto o global #}
+        {% if sf.project_code %}
+          <li>
+              {% firstof sf.params|urlencode:"" "" as qs %}
+              <a class="dropdown-item"
+                 href="{% url 'inv:inventory_by_project' sf.project_code %}{% if qs %}?{{ qs }}{% endif %}">
+                {{ sf.name }}
+              </a>
+          </li>
+        {% else %}
+          <li>
+            {% firstof sf.params|urlencode:"" "" as qs %}
+            <a class="dropdown-item"
+               href="{% url 'inv:list' %}{% if qs %}?{{ qs }}{% endif %}">
+              {{ sf.name }}
+            </a>
+          </li>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <li><span class="dropdown-item-text text-muted">No saved filters</span></li>
+    {% endif %}
+  </ul>
+</div>
