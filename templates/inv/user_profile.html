@@ -1,0 +1,24 @@
+{% extends "inv/base.html" %}
+{% block title %}Perfil · Inventory system{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 720px;">
+  <h2 class="mb-3">Perfil</h2>
+
+  <div class="card">
+    <div class="card-body">
+      <p><strong>Usuario:</strong> {{ user.username }}</p>
+      <p><strong>Nombre:</strong> {{ user.get_full_name|default:user.username }}</p>
+      <p><strong>Email:</strong> {{ user.email }}</p>
+      <hr>
+      <p><strong>Grupos:</strong>
+        {% if user.groups.all %}
+          {% for g in user.groups.all %}<span class="badge text-bg-secondary me-1">{{ g.name }}</span>{% empty %}—{% endfor %}
+        {% else %}
+          —
+        {% endif %}
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

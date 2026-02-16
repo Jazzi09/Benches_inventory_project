@@ -1,79 +1,51 @@
 {# templates/inv/filter_form.html #}
-<div class="d-flex justify-content-between align-items-end mb-3">
-  <div id="savedFiltersInModal"
-       hx-get="{% url 'inv:saved_filter_list_modal' %}{% if project_code %}?project={{ project_code }}{% endif %}"
-       hx-trigger="load, filtersSaved from:body"
-       hx-swap="outerHTML">
-  </div>
+<form id="filterForm" method="get" action="{{ action_url }}">
+  {% if request.GET.q %}
+    <input type="hidden" name="q" value="{{ request.GET.q }}">
+  {% endif %}
+  {% if project_code %}
+    <input type="hidden" name="project" value="{{ project_code }}">
+  {% endif %}
 
-  <div class="ms-auto" style="min-width: 320px;">
-    <form id="saveFilterInlineForm"
-          hx-post="{% url 'inv:saved_filter_create' %}"
-          hx-target="this"
-          hx-swap="outerHTML">
-      {% include "inv/save_filter_inline.html" with project_code=project_code %}
-    </form>
-  </div>
-</div>
+    <div class="row gx-2 gy-3 px-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Type</label>
+            {{ filter.form.type }}
+        </div>
 
-{{ action_url|default:request.get_full_path }}
-  {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
-  {% if request.GET.per_page %}<input type="hidden" name="per_page" value="{{ request.GET.per_page }}">{% endif %}
-  {% if project_code %}<input type="hidden" name="project" value="{{ project_code }}">{% endif %}
+        <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Assigned bench</label>
+            {{ filter.form.assigned_bench }}
+        </div>
 
-  <div class="row gx-3 gy-2">
-    {% if filter.form.type %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.type.id_for_label }}">Type</label>
-        <div class="w-100">{{ filter.form.type }}</div>
-      </div>
-    {% endif %}
+        <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Supplier</label>
+            {{ filter.form.supplier }}
+        </div>
 
-    {% if filter.form.project %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.project.id_for_label }}">Project</label>
-        <div class="w-100">{{ filter.form.project }}</div>
-      </div>
-    {% endif %}
+        <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Status</label>
+            {{ filter.form.status }}
+        </div>
 
-    {% if filter.form.assigned_bench %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.assigned_bench.id_for_label }}">Assigned bench</label>
-        <div class="w-100">{{ filter.form.assigned_bench }}</div>
-      </div>
-    {% endif %}
+        <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Storage location</label>
+            {{ filter.form.storage_location }}
+        </div>
 
-    {% if filter.form.supplier %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.supplier.id_for_label }}">Supplier</label>
-        <div class="w-100">{{ filter.form.supplier }}</div>
-      </div>
-    {% endif %}
+        <div class="list-group col-12 col-md-6">
+            <label class="form-label fw-semibold">Saved filters</label>
 
-    {% if filter.form.status %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.status.id_for_label }}">Status</label>
-        <div class="w-100">{{ filter.form.status }}</div>
-      </div>
-    {% endif %}
-
-    {% if filter.form.storage_location %}
-      <div class="col-12 col-md-4">
-        <label class="form-label mb-1 fw-semibold" for="{{ filter.form.storage_location.id_for_label }}">Storage location</label>
-        <div class="w-100">{{ filter.form.storage_location }}</div>
-      </div>
-    {% endif %}
-  </div>
+            
+            <div id="savedFiltersBox"
+                hx-get="{% url 'inv:saved_filter_list_modal' %}{% if project_code %}?project={{ project_code }}{% endif %}"
+                hx-trigger="load"
+                hx-swap="innerHTML">
+            <!-- Placeholder mientras carga -->
+            <select class="form-select form-select-sm" disabled>
+                <option>Loading…</option>
+            </select>
+            </div>
+        </div>
+    </div>
 </form>
-
-<!-- <script>
-  (function() {
-    const form = document.getElementById('saveFilterInlineForm');
-    if (form) {
-      let qs = window.location.search;
-      if (qs.startsWith('?')) qs = qs.substring(1);
-      const hidden = form.querySelector('input[name="current_qs"]');
-      if (hidden) hidden.value = qs;
-    }
-  })();
-</script> -->

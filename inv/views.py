@@ -15,18 +15,21 @@ from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
 from django_tables2 import RequestConfig
 
-from .models import InventoryItem, Project, SavedFilter
+from .models import InventoryItem, Project, SavedFilter, Certification
 from .forms import InventoryItemForm, UsrCreation, CertificationForm
 from .tables import InventoryItemTable, UsersTable
 from .filters import InventoryItemFilter
 
 from urllib.parse import parse_qs, urlencode
+from django.http import QueryDict
+from django.views.decorators.http import require_http_methods
+import json
 
 @login_required
 @permission_required("inv.view_inv")
 def inventory_filter_modal(request):
 
-    project_code = request.GET.get("project")  # puede venir del botón o del contexto
+    project_code = request.GET.get("project")
 
     if project_code:
         current_project = Project.objects.filter(code=project_code).first()
@@ -66,12 +69,18 @@ def inventory_by_project(request, project_code):
     f = InventoryItemFilter(request.GET, queryset=qs)
     qs = f.qs
     try:
-        per_page = int(request.GET.get("per_page", 6))
+        per_page = int(request.GET.get("per_page", 5))
     except ValueError:
-        per_page = 6
-    if per_page not in (6, 10, 25, 50, 100):
-        per_page = 6
-    table = InventoryItemTable(qs)
+        per_page = 5
+    if per_page not in (5, 10, 25, 50, 100):
+        per_page = 5
+    new_id = request.GET.get("new")
+    table = InventoryItemTable(
+        qs,
+        row_attrs={
+            "class": (lambda record: "highlight-new" if new_id and str(record.id) == str(new_id) else "")
+        }
+    )
     RequestConfig(request, paginate={"per_page": per_page}).configure(table)
     return render(request, "inv/list_tables2.html", {
         "table": table,                    
@@ -85,16 +94,16 @@ class UserListView(LoginRequiredMixin,SingleTableMixin, FilterView):
     table_class = UsersTable
     template_name = "inv/user_list.html"
     table_pagination = {
-        "per_page": 6         
+        "per_page": 5         
     }
 
     def get_table_pagination(self, table):
         try:
-            per_page = int(self.request.GET.get("per_page", 6))
+            per_page = int(self.request.GET.get("per_page", 5))
         except ValueError:
-            per_page = 6
-        if per_page not in (6, 10, 25, 50, 100):
-            per_page = 6
+            per_page = 5
+        if per_page not in (5, 10, 25, 50, 100):
+            per_page = 5
         return {"per_page": per_page}
 
     def get_queryset(self):
@@ -111,16 +120,16 @@ class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
     template_name = "inv/list_tables2.html"
     filterset_class = InventoryItemFilter
     table_pagination = {
-        "per_page": 6         
+        "per_page": 5         
     }
 
     def get_table_pagination(self, table):
         try:
-            per_page = int(self.request.GET.get("per_page", 6))
+            per_page = int(self.request.GET.get("per_page", 5))
         except ValueError:
-            per_page = 6
-        if per_page not in (6, 10, 25, 50, 100):
-            per_page = 6
+            per_page = 5
+        if per_page not in (5, 10, 25, 50, 100):
+            per_page = 5
         return {"per_page": per_page}
 
     def get_queryset(self):
@@ -132,22 +141,30 @@ class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
 
 @login_required
 @permission_required("inv.change_inv")
-def inventory_create(request):
-    project_code = request.GET.get("project") or request.POST.get("project")
-    current_project = None
-    if project_code:
-        current_project = Project.objects.filter(code=project_code).first()
+def inventory_create(request, project_code=None):
+    code = project_code or request.GET.get("project") or request.POST.get("project")
+    current_project = Project.objects.filter(code=code).first() if code else None
+    
+    try:
+        per_page = int(request.GET.get("per_page", 5))
+    except ValueError:
+        per_page = 5
+    if per_page not in (5, 10, 25, 50, 100):
+        per_page = 5
 
     if request.method == "POST":
         form = InventoryItemForm(request.POST)
         if form.is_valid():
-            obj = form.save(ommit=False)
+            obj = form.save(commit=False)
             if current_project:
                 obj.project = current_project
             obj.save()
             if request.headers.get("HX-Request"):
                 return HttpResponse(status=204, headers={"HX-Refresh": "true"})
-            per_page = 6
+            if current_project:
+                url = reverse("inv:inventory_by_project", args=[current_project.code])
+                return redirect(f"{url}?new={obj.id}")
+            per_page = 5
             total = InventoryItem.objects.count()
             last_page = math.ceil(total / per_page)
             return redirect(reverse("inv:list") + f"?page={last_page}#row-{obj.pk}")
@@ -158,9 +175,9 @@ def inventory_create(request):
         form = InventoryItemForm(initial=initial)
 
         if request.headers.get("HX-Request"):
-            action = reverse("inv:create")
-            if current_project:
-                action += f"?project={current_project.code}"  # preserva el proyecto
+            action = reverse("inv:create", args=[current_project.code]) if current_project and project_code else reverse("inv:create")
+            if current_project and not project_code:
+                action += f"?project={current_project.code}"
             return render(request, "inv/inventory_form.html", {
                 "form": form,
                 "in_modal": True,
@@ -181,8 +198,12 @@ def inventory_edit(request, pk):
             form.save()
             messages.success(request, "Item actualizado")
             if request.headers.get("HX-Request"):
-                return HttpResponse(status=204, headers={"HX-Refresh": "true"})
-            return redirect("inv:list")
+                return HttpResponse(status=204, headers={"HX-Refresh": "true"}) 
+            from django.urls import reverse
+            proj_code = item.project.code if item.project else ""
+            if proj_code:
+                return redirect(reverse("inv:inventory_by_project", args=[proj_code]))
+            return redirect("inv:list")  
     else:
         form = InventoryItemForm(instance=item)
 
@@ -271,8 +292,71 @@ def certification_history(request, pk):
 
 @login_required
 @permission_required("inv.change_inv")
+@require_http_methods(["GET", "POST"])
+def certification_edit(request, pk):
+    cert = get_object_or_404(Certification, pk=pk)
+    item = cert.item
+
+    if request.method == "POST":
+        form = CertificationForm(request.POST, request.FILES, instance=cert)
+        if form.is_valid():
+            form.save()
+
+            if request.headers.get("HX-Request"):
+                resp = HttpResponse(status=204)
+                resp["HX-Trigger"] = json.dumps({"certChanged": True})
+                resp["HX-Refresh"] = "true"
+                return resp
+
+            messages.success(request, "Certification updated.")
+            return redirect("inv:certification_history", pk=item.pk)
+
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "inv/certification_form_inner.html",
+                {
+                    "form": form,
+                    "action_url": reverse("inv:certification_edit", args=[cert.pk]),
+                },
+            )
+        return render(request, "inv/certification_form.html", {"item": item, "form": form, "mode": "edit"})
+
+    # GET
+    form = CertificationForm(instance=cert)
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "inv/certification_form_inner.html",
+            {
+                "form": form,
+                "action_url": reverse("inv:certification_edit", args=[cert.pk]),
+            },
+        )
+    return render(request, "inv/certification_form.html", {"item": item, "form": form, "mode": "edit"})
+
+@login_required
+@permission_required("inv.change_inv")
+@require_http_methods(["POST"])
+def certification_delete(request, pk):
+    cert = get_object_or_404(Certification, pk=pk)
+    item_pk = cert.item_id
+    if cert.file and cert.file.storage.exists(cert.file.name):
+        cert.file.delete(save=False)
+    cert.delete()
+    if request.headers.get("HX-Request"):
+        resp = HttpResponse(status=204)
+        resp["HX-Trigger"] = json.dumps({"certChanged": True})
+        resp["HX-Refresh"] = "true"
+        return resp
+    messages.success(request, "Certification deleted.")
+    return redirect("inv:certification_history", pk=item_pk)
+
+@login_required
+@permission_required("inv.change_inv")
 def certification_create(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
+
     if not item.requires_certification:
         messages.error(request, "This item does not require certification.")
         return redirect("inv:certification_history", pk=item.pk)
@@ -283,40 +367,38 @@ def certification_create(request, pk):
             cert = form.save(commit=False)
             cert.item = item
             cert.save()
+
+            if request.headers.get("HX-Request"):
+                resp = HttpResponse(status=204)
+                resp["HX-Trigger"] = json.dumps({"certChanged": True})
+                resp["HX-Refresh"] = "true"
+                return resp
+
             messages.success(request, "Certification saved successfully.")
             return redirect("inv:certification_history", pk=item.pk)
-    else:
-        form = CertificationForm()
 
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "inv/certification_form_inner.html",
+                {
+                    "form": form,
+                    "action_url": reverse("inv:certification_create", args=[item.pk]),
+                },
+            )
+        return render(request, "inv/certification_form.html", {"item": item, "form": form})
+
+    form = CertificationForm()
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "inv/certification_form_inner.html",
+            {
+                "form": form,
+                "action_url": reverse("inv:certification_create", args=[item.pk]),
+            },
+        )
     return render(request, "inv/certification_form.html", {"item": item, "form": form})
-
-@login_required
-def saved_filter_modal(request):
-    project_code = request.GET.get("project")
-    if project_code:
-        current_project = Project.objects.filter(code=project_code).first()
-        base_qs = (InventoryItem.objects
-                   .filter(project=current_project)
-                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
-                   .order_by('id'))
-        action = reverse("inv:inventory_by_project", args=[project_code])
-    else:
-        base_qs = (InventoryItem.objects
-                   .select_related('type', 'supplier', 'status', 'assigned_bench', 'project')
-                    .order_by('id'))
-        action = reverse("inv:list")
-
-    f = InventoryItemFilter(request.GET, queryset=base_qs)
-
-    saved_filters = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
-    
-    return render(request, "inv/filter_form.html", {
-        "filter": f,
-        "action_url": action,
-        "project_code": project_code,
-        "saved_filters": saved_filters,
-    })
-
 
 @login_required
 @require_POST
@@ -325,11 +407,19 @@ def saved_filter_create(request):
     if not name:
         return render(request, "inv/saved_filter_form.html", {
             "error": "Name is required.",
+            "project": request.POST.get("project"),
+            "current_qs": request.POST.get("current_qs", "")
         }, status=400)
     raw_qs = request.POST.get("current_qs", "")
     qs_dict = {}
     if raw_qs:
+        from urllib.parse import parse_qs
+        EXCLUDE = {"page", "per_page"}
         for k, v in parse_qs(raw_qs, keep_blank_values=True).items():
+            if k in EXCLUDE:
+                continue
+            if not any(x for x in v if x != ""):
+                continue
             qs_dict[k] = v[0] if len(v) == 1 else v
 
     project_code = request.POST.get("project") or qs_dict.get("project") or None
@@ -339,21 +429,53 @@ def saved_filter_create(request):
         name=name,
         defaults={"params": qs_dict, "project_code": project_code}
     )
-
-    return JsonResponse({}, status=204, headers={"HX-Trigger": "filtersSaved"})
-
+    import json
+    resp = HttpResponse(status=204)
+    resp["HX-Trigger"] = json.dumps({"filtersSaved": True})
+    return resp
 
 @login_required
 def saved_filter_list_modal(request):
     project_code = request.GET.get("project")
-    """objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")"""    
+    objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
+
+    items = []
+    for f in objects:
+        params = f.params or {}
+        qs = urlencode(params, doseq=True)
+        items.append({"name": f.name, "qs": qs})
+
     return render(request, "inv/saved_filter_dropdown.html", {
         "project_code": project_code,
+        "items": items,
     })
 
+@login_required
+def saved_filter_form_modal(request):
+    qd: QueryDict = request.GET.copy()
 
-""" @login_required
-def saved_filter_list(request):
-    objects = SavedFilter.objects.filter(user=request.user).order_by("-created_at")
-    return render(request, "inv/saved_filter_list.html", {"objects": objects})
- """
+    EXCLUDE = {"page", "per_page", "q"}
+    for key in EXCLUDE:
+        if key in qd:
+            qd.pop(key)
+
+    for key in list(qd.keys()):
+        values = qd.getlist(key)
+        if not any(v for v in values if v is not None and v != ""):
+            qd.pop(key)
+
+    project_code = qd.get("project")
+
+    current_qs = qd.urlencode()
+
+    ctx = {
+        "project": project_code,
+        "current_qs": current_qs,
+    }
+    return render(request, "inv/saved_filter_form.html", ctx)
+
+@login_required
+def user_profile(request):
+    return render(request, "inv/user_profile.html", {
+        "user": request.user,
+    })

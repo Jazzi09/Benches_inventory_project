@@ -1,22 +1,92 @@
-{# saved_filter_dropdown.html #}
-<div class="dropdown">
-  <ul class="dropdown-menu">
-    {% if objects %}
-      {% for sf in objects %}
-        {% with qs=sf.params|urlencode %}
-          {% if sf.project_code %}
-            <li>
-                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
-            </li>
-          {% else %}
-            <li>
-                {% if qs %}?{{ qs }}{% endif %}">{{ sf.name }}</a>
-            </li>
-          {% endif %}
-        {% endwith %}
-      {% endfor %}
-    {% else %}
-      <li><span class="dropdown-item-text text-muted">No saved filters</span></li>
-    {% endif %}
-  </ul>
-</div>
+<select id="savedFiltersSelect" class="form-select form-select-sm">
+  <option value="" selected>Select a saved filter</option>
+  {% if items %}
+    {% for it in items %}
+      <option value="{{ it.qs }}">{{ it.name }}</option>
+    {% endfor %}
+  {% endif %}
+</select>
+
+<script>
+(function() {
+  const sel = document.getElementById('savedFiltersSelect');
+  if (!sel) return;
+
+  const FILTER_FIELDS = ["type", "assigned_bench", "supplier", "status", "storage_location"];
+
+  function clearInput(el) {
+    if (!el) return;
+    if (el.tagName === 'SELECT') {
+      if (el.multiple) {
+        [...el.options].forEach(opt => opt.selected = false);
+      } else {
+        el.value = "";
+      }
+    } else if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = false;
+    } else {
+      el.value = "";
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function setInput(el, values) {
+    if (!el) return;
+    if (!Array.isArray(values)) values = [values];
+
+    if (el.tagName === 'SELECT') {
+      if (el.multiple) {
+        [...el.options].forEach(opt => opt.selected = values.includes(opt.value));
+      } else {
+        el.value = values[0] ?? "";
+      }
+    } else if (el.type === 'checkbox' || el.type === 'radio') {
+      el.checked = values.includes(el.value);
+    } else {
+      el.value = values[0] ?? "";
+    }
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function applySavedFilterToForm(qs) {
+    const form = document.getElementById('filterForm');
+    if (!form) return;
+
+    const params = new URLSearchParams(qs.startsWith('?') ? qs.slice(1) : qs);
+    const presentKeys = new Set(Array.from(params.keys()));
+
+    FILTER_FIELDS.forEach((name) => {
+      if (!presentKeys.has(name)) {
+        const inputs = form.querySelectorAll(`[name="${name}"]`);
+        inputs.forEach(clearInput);
+      }
+    });
+
+    for (const name of presentKeys) {
+      const inputs = form.querySelectorAll(`[name="${name}"]`);
+      if (inputs.length === 0) continue;
+
+      const values = params.getAll(name);
+      if (inputs.length > 1) {
+        inputs.forEach(el => { if (el.type === 'checkbox' || el.type === 'radio') el.checked = false; });
+        inputs.forEach(el => {
+          if (el.type === 'checkbox' || el.type === 'radio') {
+            el.checked = values.includes(el.value);
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+          } else {
+            setInput(el, values);
+          }
+        });
+      } else {
+        setInput(inputs[0], values);
+      }
+    }
+  }
+
+  sel.addEventListener('change', function() {
+    const qs = sel.value;
+    if (!qs) return;
+    applySavedFilterToForm(qs);
+  });
+})();
+</script>

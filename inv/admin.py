@@ -1,6 +1,6 @@
 
 from django.contrib import admin
-from .models import InventoryItem, AssignedBench, ItemType, Supplier, Status, StorageLocation, CapexOpex, Project, Certification
+from .models import InventoryItem, AssignedBench, ItemType, Supplier, Status, StorageLocation, CapexOpex, Project, Certification, SavedFilter
 
 @admin.register(InventoryItem)
 class InventoryItemAdmin(admin.ModelAdmin):
@@ -84,3 +84,9 @@ class CertificationAdmin(admin.ModelAdmin):
     list_display = ("id", "item", "certification_date", "year")
     list_filter = ("year",)
     search_fields = ("item__name",)
+
+@admin.register(SavedFilter)
+class SavedFilterAdmin(admin.ModelAdmin):
+    list_display = ("name", "user", "project_code", "created_at")
+    search_fields = ("name", "user__username", "project_code")
+    readonly_fields = ("created_at",)
