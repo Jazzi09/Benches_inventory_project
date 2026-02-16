@@ -3,6 +3,8 @@ from django import forms
 from .models import InventoryItem, CapexOpex, ItemType, Certification
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
+from django.utils.safestring import mark_safe
+import os
 
 class InventoryItemForm(forms.ModelForm):
     class Meta:
@@ -23,6 +25,8 @@ class InventoryItemForm(forms.ModelForm):
             'type': forms.RadioSelect(attrs={
                 'class': 'form-check-input'
                 }),
+            'requires_certification': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -56,21 +60,38 @@ class UsrCreation(UserCreationForm):
         fields = ("username", "email", )
 
 class CertificationForm(forms.ModelForm):
+    certification_date = forms.DateField(
+        label="Certification date",
+        widget=forms.DateInput(
+            format="%Y-%m-%d",
+            attrs={"type": "date", "class": "form-control date-like-file", "lang": "en", "placeholder": "YYYY-MM-DD", "id": "certification_date"},
+        ),
+        input_formats=["%Y-%m-%d"],
+        required=True,
+    )
+
     class Meta:
         model = Certification
         fields = ["certification_date", "file"]
         widgets = {
-            "certification_date": forms.DateInput(attrs={"type": "date"}),
+            "file": forms.FileInput(attrs={"class": "form-control"}),
+        }
+        labels = {
+            "file": "File",
         }
 
     def clean_file(self):
-        f = self.cleaned_data["file"]
+        f = self.cleaned_data.get("file")
+        if not f:
+            return f
+
         max_mb = 10
         if f.size > max_mb * 1024 * 1024:
             raise forms.ValidationError(f"The file must not exceed {max_mb} MB.")
-        import os
+
         allowed = {".pdf", ".png", ".jpg", ".jpeg"}
         ext = os.path.splitext(f.name)[1].lower()
         if ext not in allowed:
             raise forms.ValidationError("Allowed extensions: PDF, PNG, JPG, JPEG.")
         return f
+

@@ -169,6 +169,16 @@
           {% if form.comments.errors %}<div class="invalid-feedback d-block">{{ form.comments.errors|striptags }}</div>{% endif %}
         </div>
       {% endif %}
+    
+      <div class="form-check">
+          {{ form.requires_certification }}
+          <label for="{{ form.requires_certification.id_for_label }}" class="form-check-label">
+            {{ form.requires_certification.label }}
+          </label>
+          {% if form.requires_certification.errors %}
+            <div class="invalid-feedback d-block">{{ form.requires_certification.errors }}</div>
+          {% endif %}
+      </div>
     </div>
 </form>
 

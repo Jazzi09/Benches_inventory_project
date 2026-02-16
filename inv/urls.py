@@ -6,7 +6,7 @@ from .views import (
     InventoryListView, UserListView, inventory_create, inventory_edit, inventory_delete,
     user_create, HomeView, log_out, inventory_by_project, toggle_user_group, empty_path, 
     logged_in, certification_history, certification_create, inventory_filter_modal,
-    saved_filter_form_modal, saved_filter_create, saved_filter_list_modal
+    saved_filter_form_modal, saved_filter_create, saved_filter_list_modal, certification_edit, certification_delete
 ) 
 
 app_name = "inv"
@@ -30,6 +30,8 @@ urlpatterns = [
     path("filters/save/modal/", saved_filter_form_modal, name="saved_filter_form_modal"),
     path("filters/saved/create", saved_filter_create, name="saved_filter_create"),
     path("filters/saved/dropdown/", saved_filter_list_modal, name="saved_filter_list_modal"),
+    path("certifications/<int:pk>/edit/", certification_edit, name="certification_edit"),
+    path("certifications/<int:pk>/delete/", certification_delete, name="certification_delete"),
 ]
 
 if settings.DEBUG:

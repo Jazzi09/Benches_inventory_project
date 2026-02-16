@@ -274,13 +274,14 @@
                     data-bs-toggle="modal"
                     data-bs-target="#modalCreate"
                     data-title="Save filters"
-                    hx-get="{% url 'inv:saved_filter_form_modal' %}{% if current_project %}?project={{ current_project.code }}{% endif %}"
+                    hx-get="{% url 'inv:saved_filter_form_modal' %}{% if current_project %}?project={{ current_project.code }}{% if request.GET %}&{% endif %}{% elif request.GET %}?{% endif %}{{ request.GET.urlencode }}"
                     hx-target="#modalFormWrapper"
                     hx-swap="innerHTML"
                     id="btnSaveFilters"
                     title="Save filters">
-                    <i class="bi bi-bookmark me-1"></i> Save filters
+                <i class="bi bi-bookmark me-1"></i> Save filters
                 </button>
+
             </div>
 
             <!-- Search + Filter buttons -->
@@ -323,7 +324,7 @@
                     data-bs-toggle="modal"
                     data-bs-target="#modalCreate"
                     data-title="Filters"
-                    hx-get="{% url 'inv:filter_modal' %}{% if current_project %}?project={{ current_project.code }}{% endif %}"
+                    hx-get="{% url 'inv:filter_modal' %}{% if current_project %}?project={{ current_project.code }}{% if request.GET %}&{% endif %}{% elif request.GET %}?{% endif %}{{ request.GET.urlencode }}"
                     hx-target="#modalFormWrapper"
                     hx-swap="innerHTML"
                     title="Filters">
@@ -402,12 +403,11 @@
                 }
             });
 
-
         // 🔧 Enlaza el footer al form correcto después de CUALQUIER swap
             function wireFooterToForm() {
                 const saveForm   = wrapper.querySelector('#saveFilterForm')
-                            || wrapper.querySelector(`form[action$="{% url 'inv:saved_filter_create' %}"]`)
-                            || wrapper.querySelector(`form[hx-post="{% url 'inv:saved_filter_create' %}"]`);
+                                || wrapper.querySelector(`form[action$="{% url 'inv:saved_filter_create' %}"]`)
+                                || wrapper.querySelector(`form[hx-post="{% url 'inv:saved_filter_create' %}"]`);
                 const filterForm = wrapper.querySelector('#filterForm');
                 const itemForm   = wrapper.querySelector('#itemForm');
 
@@ -437,8 +437,20 @@
             }
 
             document.addEventListener('htmx:afterSwap', wireFooterToForm);
-            document.addEventListener('htmx:afterSettle', wireFooterToForm); // extra robustez
+            document.addEventListener('htmx:afterSettle', wireFooterToForm);
 
+            submitBtn.addEventListener('click', (ev) => {
+                const title = (titleEl.textContent || '').trim().toLowerCase();
+                if (title.startsWith('filters')) {
+                    const form = wrapper.querySelector('#filterForm') || wrapper.querySelector('form[method="get"]');
+                    if (form) {
+                        // evitamos que un 'form=...' mal cableado interfiera
+                        ev.preventDefault();
+                        form.submit();  // ← aquí navegamos con GET a action_url + parámetros del form
+                    }
+                }
+            });
+            
             document.addEventListener('filtersSaved', () => {
                 bootstrap.Modal.getInstance(modalEl)?.hide();
             });

@@ -15,13 +15,15 @@ from django_tables2.views import SingleTableMixin
 from django_filters.views import FilterView
 from django_tables2 import RequestConfig
 
-from .models import InventoryItem, Project, SavedFilter
+from .models import InventoryItem, Project, SavedFilter, Certification
 from .forms import InventoryItemForm, UsrCreation, CertificationForm
 from .tables import InventoryItemTable, UsersTable
 from .filters import InventoryItemFilter
 
 from urllib.parse import parse_qs, urlencode
-
+from django.http import QueryDict
+from django.views.decorators.http import require_http_methods
+import json
 
 @login_required
 @permission_required("inv.view_inv")
@@ -142,7 +144,7 @@ def inventory_create(request):
     if request.method == "POST":
         form = InventoryItemForm(request.POST)
         if form.is_valid():
-            obj = form.save(ommit=False)
+            obj = form.save(commit=False)
             if current_project:
                 obj.project = current_project
             obj.save()
@@ -272,8 +274,71 @@ def certification_history(request, pk):
 
 @login_required
 @permission_required("inv.change_inv")
+@require_http_methods(["GET", "POST"])
+def certification_edit(request, pk):
+    cert = get_object_or_404(Certification, pk=pk)
+    item = cert.item
+
+    if request.method == "POST":
+        form = CertificationForm(request.POST, request.FILES, instance=cert)
+        if form.is_valid():
+            form.save()
+
+            if request.headers.get("HX-Request"):
+                resp = HttpResponse(status=204)
+                resp["HX-Trigger"] = json.dumps({"certChanged": True})
+                resp["HX-Refresh"] = "true"
+                return resp
+
+            messages.success(request, "Certification updated.")
+            return redirect("inv:certification_history", pk=item.pk)
+
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "inv/certification_form_inner.html",
+                {
+                    "form": form,
+                    "action_url": reverse("inv:certification_edit", args=[cert.pk]),
+                },
+            )
+        return render(request, "inv/certification_form.html", {"item": item, "form": form, "mode": "edit"})
+
+    # GET
+    form = CertificationForm(instance=cert)
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "inv/certification_form_inner.html",
+            {
+                "form": form,
+                "action_url": reverse("inv:certification_edit", args=[cert.pk]),
+            },
+        )
+    return render(request, "inv/certification_form.html", {"item": item, "form": form, "mode": "edit"})
+
+@login_required
+@permission_required("inv.change_inv")
+@require_http_methods(["POST"])
+def certification_delete(request, pk):
+    cert = get_object_or_404(Certification, pk=pk)
+    item_pk = cert.item_id
+    if cert.file and cert.file.storage.exists(cert.file.name):
+        cert.file.delete(save=False)
+    cert.delete()
+    if request.headers.get("HX-Request"):
+        resp = HttpResponse(status=204)
+        resp["HX-Trigger"] = json.dumps({"certChanged": True})
+        resp["HX-Refresh"] = "true"
+        return resp
+    messages.success(request, "Certification deleted.")
+    return redirect("inv:certification_history", pk=item_pk)
+
+@login_required
+@permission_required("inv.change_inv")
 def certification_create(request, pk):
     item = get_object_or_404(InventoryItem, pk=pk)
+
     if not item.requires_certification:
         messages.error(request, "This item does not require certification.")
         return redirect("inv:certification_history", pk=item.pk)
@@ -284,11 +349,37 @@ def certification_create(request, pk):
             cert = form.save(commit=False)
             cert.item = item
             cert.save()
+
+            if request.headers.get("HX-Request"):
+                resp = HttpResponse(status=204)
+                resp["HX-Trigger"] = json.dumps({"certChanged": True})
+                resp["HX-Refresh"] = "true"
+                return resp
+
             messages.success(request, "Certification saved successfully.")
             return redirect("inv:certification_history", pk=item.pk)
-    else:
-        form = CertificationForm()
 
+        if request.headers.get("HX-Request"):
+            return render(
+                request,
+                "inv/certification_form_inner.html",
+                {
+                    "form": form,
+                    "action_url": reverse("inv:certification_create", args=[item.pk]),
+                },
+            )
+        return render(request, "inv/certification_form.html", {"item": item, "form": form})
+
+    form = CertificationForm()
+    if request.headers.get("HX-Request"):
+        return render(
+            request,
+            "inv/certification_form_inner.html",
+            {
+                "form": form,
+                "action_url": reverse("inv:certification_create", args=[item.pk]),
+            },
+        )
     return render(request, "inv/certification_form.html", {"item": item, "form": form})
 
 @login_required
@@ -298,11 +389,19 @@ def saved_filter_create(request):
     if not name:
         return render(request, "inv/saved_filter_form.html", {
             "error": "Name is required.",
+            "project": request.POST.get("project"),
+            "current_qs": request.POST.get("current_qs", "")
         }, status=400)
     raw_qs = request.POST.get("current_qs", "")
     qs_dict = {}
     if raw_qs:
+        from urllib.parse import parse_qs
+        EXCLUDE = {"page", "per_page"}
         for k, v in parse_qs(raw_qs, keep_blank_values=True).items():
+            if k in EXCLUDE:
+                continue
+            if not any(x for x in v if x != ""):
+                continue
             qs_dict[k] = v[0] if len(v) == 1 else v
 
     project_code = request.POST.get("project") or qs_dict.get("project") or None
@@ -312,8 +411,10 @@ def saved_filter_create(request):
         name=name,
         defaults={"params": qs_dict, "project_code": project_code}
     )
-
-    return HttpResponse(status=204, headers={"HX-Trigger": "filtersSaved"})
+    import json
+    resp = HttpResponse(status=204)
+    resp["HX-Trigger"] = json.dumps({"filtersSaved": True})
+    return resp
 
 @login_required
 def saved_filter_list_modal(request):
@@ -333,8 +434,22 @@ def saved_filter_list_modal(request):
 
 @login_required
 def saved_filter_form_modal(request):
-    project_code = request.GET.get("project")
-    current_qs = request.META.get("QUERY_STRING", "")
+    qd: QueryDict = request.GET.copy()
+
+    EXCLUDE = {"page", "per_page", "q"}
+    for key in EXCLUDE:
+        if key in qd:
+            qd.pop(key)
+
+    for key in list(qd.keys()):
+        values = qd.getlist(key)
+        if not any(v for v in values if v is not None and v != ""):
+            qd.pop(key)
+
+    project_code = qd.get("project")
+
+    current_qs = qd.urlencode()
+
     ctx = {
         "project": project_code,
         "current_qs": current_qs,
