@@ -12,17 +12,15 @@
   const sel = document.getElementById('savedFiltersSelect');
   if (!sel) return;
 
-  // Campos del FilterSet (names reales en el form)
   const FILTER_FIELDS = ["type", "assigned_bench", "supplier", "status", "storage_location"];
 
-  // Limpia un input/select (soporta checkbox/radio/múltiple)
   function clearInput(el) {
     if (!el) return;
     if (el.tagName === 'SELECT') {
       if (el.multiple) {
         [...el.options].forEach(opt => opt.selected = false);
       } else {
-        el.value = ""; // selecciona "All" (empty_label) en tus ModelChoiceFilter
+        el.value = "";
       }
     } else if (el.type === 'checkbox' || el.type === 'radio') {
       el.checked = false;
@@ -32,7 +30,6 @@
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // Setea un input/select con lista de valores (maneja simple y múltiple)
   function setInput(el, values) {
     if (!el) return;
     if (!Array.isArray(values)) values = [values];
@@ -44,8 +41,6 @@
         el.value = values[0] ?? "";
       }
     } else if (el.type === 'checkbox' || el.type === 'radio') {
-      // Para checkboxes/radios con mismo name:
-      // se maneja fuera (con querySelectorAll), aquí no solemos llegar.
       el.checked = values.includes(el.value);
     } else {
       el.value = values[0] ?? "";
@@ -53,32 +48,26 @@
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  // Aplica el saved filter al #filterForm limpiando lo que no venga en params
   function applySavedFilterToForm(qs) {
     const form = document.getElementById('filterForm');
     if (!form) return;
 
     const params = new URLSearchParams(qs.startsWith('?') ? qs.slice(1) : qs);
-    const presentKeys = new Set(Array.from(params.keys())); // claves que SÍ vinieron
+    const presentKeys = new Set(Array.from(params.keys()));
 
-    // 1) Limpiar los campos que NO vengan en params
     FILTER_FIELDS.forEach((name) => {
       if (!presentKeys.has(name)) {
-        // puede haber 1 o varios inputs con el mismo name
         const inputs = form.querySelectorAll(`[name="${name}"]`);
         inputs.forEach(clearInput);
       }
     });
 
-    // 2) Aplicar los que SÍ vienen, soportando múltiples valores
     for (const name of presentKeys) {
       const inputs = form.querySelectorAll(`[name="${name}"]`);
       if (inputs.length === 0) continue;
 
-      const values = params.getAll(name); // respeta 'a=1&a=2'
+      const values = params.getAll(name);
       if (inputs.length > 1) {
-        // checkboxes/radios con mismo name
-        // limpia primero por si acaso
         inputs.forEach(el => { if (el.type === 'checkbox' || el.type === 'radio') el.checked = false; });
         inputs.forEach(el => {
           if (el.type === 'checkbox' || el.type === 'radio') {
@@ -98,7 +87,6 @@
     const qs = sel.value;
     if (!qs) return;
     applySavedFilterToForm(qs);
-    // NO enviamos aquí: el usuario pulsará "Show results"
   });
 })();
 </script>

@@ -6,7 +6,8 @@ from .views import (
     InventoryListView, UserListView, inventory_create, inventory_edit, inventory_delete,
     user_create, HomeView, log_out, inventory_by_project, toggle_user_group, empty_path, 
     logged_in, certification_history, certification_create, inventory_filter_modal,
-    saved_filter_form_modal, saved_filter_create, saved_filter_list_modal, certification_edit, certification_delete
+    saved_filter_form_modal, saved_filter_create, saved_filter_list_modal, certification_edit,
+    certification_delete, user_profile
 ) 
 
 app_name = "inv"
@@ -14,8 +15,10 @@ urlpatterns = [
     path('inventory/', InventoryListView.as_view(), name='list'),
     path('manage_users/', UserListView.as_view(), name="user_manage"),
     path('home', HomeView, name='home_view'),
+    path('profile/', user_profile, name='user_profile'),
     path('inventory/<str:project_code>/', inventory_by_project, name='inventory_by_project'),
     path('new/', inventory_create, name='create'),
+    path('inventory/<str:project_code>/new/', inventory_create, name='inventory_create'),
     path("<int:pk>/edit/", inventory_edit, name="edit"),
     path("<int:pk>/delete/", inventory_delete, name="delete"),
     path("usr_create/", user_create, name='usr_create'),

@@ -1,6 +1,5 @@
 {# templates/inv/filter_form.html #}
 <form id="filterForm" method="get" action="{{ action_url }}">
-  {# Mantén búsqueda actual si la usas #}
   {% if request.GET.q %}
     <input type="hidden" name="q" value="{{ request.GET.q }}">
   {% endif %}
@@ -47,22 +46,6 @@
                 <option>Loading…</option>
             </select>
             </div>
-
-
-{% comment %}             <div class="dropdown" id="savedFiltersDropdownBox"
-                    hx-get="{% url 'inv:saved_filter_list_modal' %}{% if project_code %}?project={{ project_code }}{% endif %}"
-                    hx-trigger="load"
-                    hx-swap="innerHTML">
-                <!-- HTMX insertará aquí el botón + menú -->
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100 text-start"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                        disabled>
-                    Loading…
-                </button>
-            </div> {% endcomment %}
-
         </div>
     </div>
 </form>

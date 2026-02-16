@@ -196,10 +196,21 @@
 <body class="p-4">
     <div class="container-fluid">
 
-        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-5">
             <h2 class="m-0 d-flex align-items-center gap-3">
                 <span>Manage Users</span>     
             </h2>
+        </div>
+
+         <div class="position-absolute top-0 start-0 m-3 mt-4 ms-4" style="z-index:1040;">
+        <button type="button"
+                class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center"
+                onclick="window.history.back()"
+                aria-label="Back"
+                title="Back">
+            <i class="bi bi-arrow-left me-1"></i>
+            Back
+        </button>
         </div>
         
         <div class="position-absolute top-0 end-0 m-3 mb-5 me-5 d-flex gap-2">
@@ -213,31 +224,6 @@
             </button>
         </form>
         </div>
-
-        <!-- Toolbar -->
-        <!-- <div class="d-flex justify-content-between align-items-center gap-2 mb-3"> -->
-
-            <!-- New item + Save filters -->
-            <!-- <div class="d-flex align-items-center gap-2">
-            
-                <button
-                type="button"
-                class="btn btn-primary btn-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#modalCreate"
-                hx-get="{% url 'inv:usr_create' %}"
-                hx-target="#modalCreate .modal-body"
-                hx-swap="innerHTML">
-                <i class="bi bi-plus-lg me-1"></i> Create User
-                </button>
-            </div> -->
-        <!-- </div> -->
-
-        <!-- Search + Filter buttons -->
-
-
-        <!-- Modal -->
-
 
         <script src="https://unpkg.com/htmx.org@1.9.12"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -256,7 +242,6 @@
 
                     <!-- Rows per page -->
                     <form method="get" class="d-flex align-items-center gap-2 m-0">
-                        {# Mantener params (q, filtros, sort), pero resetear page al cambiar per_page #}
                         {% for key, value in request.GET.items %}
                             {% if key != "per_page" and key != "page" %}
                                 <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -326,12 +311,7 @@
             </div>
         </div>
     </div>
-  
-  <!-- Filter Modal -->
 
-    <div class="text-end mt-5 me-3">
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'inv:home_view' %}">Back</a>
-    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

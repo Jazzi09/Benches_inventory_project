@@ -69,12 +69,18 @@ def inventory_by_project(request, project_code):
     f = InventoryItemFilter(request.GET, queryset=qs)
     qs = f.qs
     try:
-        per_page = int(request.GET.get("per_page", 6))
+        per_page = int(request.GET.get("per_page", 5))
     except ValueError:
-        per_page = 6
-    if per_page not in (6, 10, 25, 50, 100):
-        per_page = 6
-    table = InventoryItemTable(qs)
+        per_page = 5
+    if per_page not in (5, 10, 25, 50, 100):
+        per_page = 5
+    new_id = request.GET.get("new")
+    table = InventoryItemTable(
+        qs,
+        row_attrs={
+            "class": (lambda record: "highlight-new" if new_id and str(record.id) == str(new_id) else "")
+        }
+    )
     RequestConfig(request, paginate={"per_page": per_page}).configure(table)
     return render(request, "inv/list_tables2.html", {
         "table": table,                    
@@ -88,16 +94,16 @@ class UserListView(LoginRequiredMixin,SingleTableMixin, FilterView):
     table_class = UsersTable
     template_name = "inv/user_list.html"
     table_pagination = {
-        "per_page": 6         
+        "per_page": 5         
     }
 
     def get_table_pagination(self, table):
         try:
-            per_page = int(self.request.GET.get("per_page", 6))
+            per_page = int(self.request.GET.get("per_page", 5))
         except ValueError:
-            per_page = 6
-        if per_page not in (6, 10, 25, 50, 100):
-            per_page = 6
+            per_page = 5
+        if per_page not in (5, 10, 25, 50, 100):
+            per_page = 5
         return {"per_page": per_page}
 
     def get_queryset(self):
@@ -114,16 +120,16 @@ class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
     template_name = "inv/list_tables2.html"
     filterset_class = InventoryItemFilter
     table_pagination = {
-        "per_page": 6         
+        "per_page": 5         
     }
 
     def get_table_pagination(self, table):
         try:
-            per_page = int(self.request.GET.get("per_page", 6))
+            per_page = int(self.request.GET.get("per_page", 5))
         except ValueError:
-            per_page = 6
-        if per_page not in (6, 10, 25, 50, 100):
-            per_page = 6
+            per_page = 5
+        if per_page not in (5, 10, 25, 50, 100):
+            per_page = 5
         return {"per_page": per_page}
 
     def get_queryset(self):
@@ -135,11 +141,16 @@ class InventoryListView(LoginRequiredMixin,SingleTableMixin, FilterView):
 
 @login_required
 @permission_required("inv.change_inv")
-def inventory_create(request):
-    project_code = request.GET.get("project") or request.POST.get("project")
-    current_project = None
-    if project_code:
-        current_project = Project.objects.filter(code=project_code).first()
+def inventory_create(request, project_code=None):
+    code = project_code or request.GET.get("project") or request.POST.get("project")
+    current_project = Project.objects.filter(code=code).first() if code else None
+    
+    try:
+        per_page = int(request.GET.get("per_page", 5))
+    except ValueError:
+        per_page = 5
+    if per_page not in (5, 10, 25, 50, 100):
+        per_page = 5
 
     if request.method == "POST":
         form = InventoryItemForm(request.POST)
@@ -150,7 +161,10 @@ def inventory_create(request):
             obj.save()
             if request.headers.get("HX-Request"):
                 return HttpResponse(status=204, headers={"HX-Refresh": "true"})
-            per_page = 6
+            if current_project:
+                url = reverse("inv:inventory_by_project", args=[current_project.code])
+                return redirect(f"{url}?new={obj.id}")
+            per_page = 5
             total = InventoryItem.objects.count()
             last_page = math.ceil(total / per_page)
             return redirect(reverse("inv:list") + f"?page={last_page}#row-{obj.pk}")
@@ -161,9 +175,9 @@ def inventory_create(request):
         form = InventoryItemForm(initial=initial)
 
         if request.headers.get("HX-Request"):
-            action = reverse("inv:create")
-            if current_project:
-                action += f"?project={current_project.code}"  # preserva el proyecto
+            action = reverse("inv:create", args=[current_project.code]) if current_project and project_code else reverse("inv:create")
+            if current_project and not project_code:
+                action += f"?project={current_project.code}"
             return render(request, "inv/inventory_form.html", {
                 "form": form,
                 "in_modal": True,
@@ -184,8 +198,12 @@ def inventory_edit(request, pk):
             form.save()
             messages.success(request, "Item actualizado")
             if request.headers.get("HX-Request"):
-                return HttpResponse(status=204, headers={"HX-Refresh": "true"})
-            return redirect("inv:list")
+                return HttpResponse(status=204, headers={"HX-Refresh": "true"}) 
+            from django.urls import reverse
+            proj_code = item.project.code if item.project else ""
+            if proj_code:
+                return redirect(reverse("inv:inventory_by_project", args=[proj_code]))
+            return redirect("inv:list")  
     else:
         form = InventoryItemForm(instance=item)
 
@@ -455,3 +473,9 @@ def saved_filter_form_modal(request):
         "current_qs": current_qs,
     }
     return render(request, "inv/saved_filter_form.html", ctx)
+
+@login_required
+def user_profile(request):
+    return render(request, "inv/user_profile.html", {
+        "user": request.user,
+    })

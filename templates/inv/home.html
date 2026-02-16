@@ -1,11 +1,9 @@
- {% load static %}
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>Inventory system</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends "inv/base.html" %}
+{% load static %}
 
+{% block title %}Inventory system{% endblock %}
+
+{% block extra_head %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
@@ -46,66 +44,49 @@
       color: #2b2f36;
     }
   </style>
-</head>
+{% endblock %}
 
-<body class="p-4">
-  <div class="container">
+{% block content %}
+<div class="container">
 
-    <!-- header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="m-0">Inventory system</h2>
-      <div class="d-flex gap-2">
-          <form method="post" action="{% url 'inv:logout' %}" class="m-0">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-outline-secondary btn-sm">Logout</button>
-        </form>
+  <!-- tiles -->
+  <div class="tile-grid">
+    <div class="row g-3 justify-content-center mt-4">
+
+      <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+        <a class="tile" href="{% url 'inv:inventory_by_project' 'SH' %}" title="Shared">
+          <i class="bi bi-grid icon"></i>
+          <div class="label">Shared</div>
+        </a>
       </div>
-    </div>
 
-    <!-- tiles -->
-    <div class="tile-grid">
-      <div class="row g-3 justify-content-center">
-
-        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
-          <a class="tile" href="{% url 'inv:user_manage' %}" title="Shared">
-            <i class="bi bi-people icon"></i>
-            <div class="label">Manage Users</div>
-          </a>
-        </div>
-
-
-        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
-          <a class="tile" href="{% url 'inv:list' %}" title="Shared">
-            <i class="bi bi-grid icon"></i>
-            <div class="label">Shared</div>
-          </a>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
-          <a class="tile" href="{% url 'inv:inventory_by_project' 'CADMs' %}" title="CADMs">
-            <i class="bi bi-kanban icon"></i>
-            <div class="label">CADMs</div>
-          </a>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
-          <a class="tile" href="{% url 'inv:inventory_by_project' 'BCM' %}" title="BCM">
-            <i class="bi bi-cpu icon"></i>
-            <div class="label">MegaBCM</div>
-          </a>
-        </div>
-
-        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
-          <a class="tile" href="{% url 'inv:inventory_by_project' 'RFHM' %}" title="RFHM">
-            <i class="bi bi-shield-check icon"></i>
-            <div class="label">RFHM</div>
-          </a>
-        </div>
-
+      <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+        <a class="tile" href="{% url 'inv:inventory_by_project' 'CADMs' %}" title="CADMs">
+          <i class="bi bi-kanban icon"></i>
+          <div class="label">CADMs</div>
+        </a>
       </div>
-    </div>
 
+      <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+        <a class="tile" href="{% url 'inv:inventory_by_project' 'BCM' %}" title="BCM">
+          <i class="bi bi-cpu icon"></i>
+          <div class="label">MegaBCM</div>
+        </a>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+        <a class="tile" href="{% url 'inv:inventory_by_project' 'RFHM' %}" title="RFHM">
+          <i class="bi bi-shield-check icon"></i>
+          <div class="label">RFHM</div>
+        </a>
+      </div>
+
+    </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
